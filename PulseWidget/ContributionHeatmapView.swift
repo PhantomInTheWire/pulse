@@ -8,10 +8,58 @@
 import SwiftUI
 import WidgetKit
 
+// MARK: - GitHub Colors
+
+struct GitHubColorPalette {
+    static let light: [Color] = [
+        Color(hex: "EBEDF0"),  // 0
+        Color(hex: "9BE9A8"),  // 1
+        Color(hex: "40C463"),  // 2
+        Color(hex: "30A14E"),  // 3
+        Color(hex: "216E39")   // 4
+    ]
+    
+    static let dark: [Color] = [
+        Color(hex: "161B22"),  // 0
+        Color(hex: "0E4429"),  // 1
+        Color(hex: "006D32"),  // 2
+        Color(hex: "26A641"),  // 3
+        Color(hex: "39D353")   // 4
+    ]
+}
+
+// MARK: - Color Hex Extension
+
+extension Color {
+    init(hex: String) {
+        let scanner = Scanner(string: hex)
+        _ = scanner.scanString("#")
+
+        var rgba: UInt64 = 0
+        scanner.scanHexInt64(&rgba)
+
+        let r = Double((rgba >> 16) & 0xFF) / 255
+        let g = Double((rgba >> 8) & 0xFF) / 255
+        let b = Double(rgba & 0xFF) / 255
+
+        self.init(red: r, green: g, blue: b)
+    }
+}
+
+// MARK: - Safe Array Access Extension
+
+extension Array {
+    subscript(safe index: Index) -> Element? {
+        return indices.contains(index) ? self[index] : nil
+    }
+}
+
+// MARK: - Widgets
+
 struct ContributionHeatmapView: View {
     let contributions: ContributionResponse
     let isStale: Bool
-    @Environment(\.colorScheme) var colorScheme
+    @Environment(\.colorScheme) private var scheme
     
     init(contributions: ContributionResponse, isStale: Bool = false) {
         self.contributions = contributions
@@ -19,154 +67,188 @@ struct ContributionHeatmapView: View {
     }
     
     var body: some View {
-        VStack(alignment: .leading, spacing: 4) {
-            HStack {
-                Text("GitHub Contributions")
-                    .font(.caption)
-                    .fontWeight(.semibold)
-                    .foregroundColor(.primary)
-                
-                if isStale {
-                    Image(systemName: "clock")
-                        .font(.caption2)
-                        .foregroundColor(.orange)
-                }
-                
-                Spacer()
-            }
+        VStack(alignment: .leading, spacing: 12) {
             
-            LazyVGrid(columns: Array(repeating: GridItem(.flexible(), spacing: 2), count: 7), spacing: 2) {
-                ForEach(contributions.weeks.indices, id: \.self) { weekIndex in
-                    let week = contributions.weeks[weekIndex]
-                    ForEach(week.days.indices, id: \.self) { dayIndex in
-                        let day = week.days[dayIndex]
-                        ContributionCell(day: day)
-                            .id("\(weekIndex)-\(dayIndex)")
-                    }
-                }
-            }
+            header
             
-            HStack {
-                Text("Less")
-                    .font(.caption2)
-                    .foregroundColor(.secondary)
-                Spacer()
-                HStack(spacing: 2) {
-                    ForEach(ContributionLevel.allCases, id: \.self) { level in
-                        Rectangle()
-                            .fill(accentColor.opacity(level.opacity))
-                            .frame(width: 8, height: 8)
-                            .cornerRadius(1)
-                    }
-                }
-                Spacer()
-                Text("More")
-                    .font(.caption2)
-                    .foregroundColor(.secondary)
-            }
+            heatmap
+            
+            GitHubLegend()
             
             if isStale {
                 Text("Data may be outdated")
                     .font(.caption2)
                     .foregroundColor(.orange)
-                    .multilineTextAlignment(.center)
+                    .padding(.top, 2)
             }
         }
-        .padding()
+        .padding(14)
+        .containerBackground(.thinMaterial, for: .widget)
     }
     
-    private var accentColor: Color {
-        return Color.blue
-    }
-}
+    // MARK: - Header
+    
+    private var header: some View {
+        HStack(spacing: 8) {
+            Image("octocat") // Add monochrome GitHub Octocat to Assets
+                .resizable()
+                .scaledToFit()
+                .frame(width: 16, height: 16)
 
-struct ContributionCell: View {
-    let day: ContributionDay
-    @Environment(\.colorScheme) var colorScheme
-    
-    var body: some View {
-        Rectangle()
-            .fill(cellColor)
-            .frame(width: 10, height: 10)
-            .cornerRadius(2)
-            .overlay(
-                RoundedRectangle(cornerRadius: 2)
-                    .stroke(Color.primary.opacity(0.1), lineWidth: 0.5)
-            )
-    }
-    
-    private var cellColor: Color {
-        let level = ContributionLevel(rawValue: day.level) ?? .zero
-        let accentColor: Color = Color.blue
-        
-        if level == .zero {
-            return Color.primary.opacity(0.05)
-        } else {
-            return accentColor.opacity(level.opacity)
+            Text("GitHub Contributions")
+                .font(.caption)
+                .fontWeight(.semibold)
+            
+            Spacer()
+            
+            if isStale {
+                Image(systemName: "clock")
+                    .foregroundColor(.orange)
+            }
         }
     }
-}
-
-struct AuthenticationPromptView: View {
-    var body: some View {
-        VStack(spacing: 12) {
-            Image(systemName: "person.crop.circle.badge.questionmark")
-                .font(.system(size: 32))
-                .foregroundColor(.secondary)
-            
-            Text("GitHub Authentication Required")
-                .font(.headline)
-                .multilineTextAlignment(.center)
-            
-            Text("Open the Pulse app to authenticate with GitHub and view your contribution heatmap.")
-                .font(.caption)
-                .multilineTextAlignment(.center)
-                .foregroundColor(.secondary)
-            
-            Button("Open Pulse") {
-                if let url = URL(string: "pulse://auth") {
-                    // Widget can't open URLs directly, this is handled by the app intent
+    
+    // MARK: - Heatmap Layout (GitHub-accurate)
+    
+    private var heatmap: some View {
+        LazyHGrid(
+            rows: Array(repeating: GridItem(.fixed(11), spacing: 3), count: 7),
+            spacing: 3
+        ) {
+            ForEach(contributions.weeks.indices, id: \.self) { weekIndex in
+                if weekIndex < contributions.weeks.count {
+                    let week = contributions.weeks[weekIndex]
+                    
+                    ForEach(0..<7, id: \.self) { dayIndex in
+                        if dayIndex < week.days.count {
+                            GitHubContributionCell(level: week.days[dayIndex].level)
+                        } else {
+                            GitHubContributionCell(level: 0)
+                        }
+                    }
                 }
             }
-            .buttonStyle(.borderedProminent)
-            .controlSize(.small)
         }
-        .padding()
+        .frame(maxHeight: .infinity, alignment: .top)
+        .padding(.vertical, 4)
     }
 }
+
+// MARK: - Heatmap Cell
+
+struct GitHubContributionCell: View {
+    let level: Int
+    @Environment(\.colorScheme) private var scheme
+    
+    var body: some View {
+        RoundedRectangle(cornerRadius: 2)
+            .fill(color(for: level))
+            .frame(width: 11, height: 11)
+    }
+    
+    private func color(for level: Int) -> Color {
+        let palette = (scheme == .dark)
+            ? GitHubColorPalette.dark
+            : GitHubColorPalette.light
+        
+        let safe = min(max(level, 0), 4)
+        return palette[safe]
+    }
+}
+
+// MARK: - Legend
+
+struct GitHubLegend: View {
+    @Environment(\.colorScheme) private var scheme
+
+    var body: some View {
+        let palette = (scheme == .dark)
+            ? GitHubColorPalette.dark
+            : GitHubColorPalette.light
+        
+        HStack(spacing: 6) {
+            Text("Less")
+                .font(.caption2)
+                .foregroundColor(.secondary)
+
+            HStack(spacing: 3) {
+                ForEach(0..<5) { i in
+                    RoundedRectangle(cornerRadius: 2)
+                        .fill(palette[i])
+                        .frame(width: 10, height: 10)
+                }
+            }
+
+            Text("More")
+                .font(.caption2)
+                .foregroundColor(.secondary)
+        }
+    }
+}
+
+// MARK: - Loading View
 
 struct LoadingView: View {
     var body: some View {
-        VStack(spacing: 12) {
+        VStack(spacing: 8) {
             ProgressView()
                 .scaleEffect(0.8)
-            
-            Text("Loading contributions...")
+
+            Text("Loading…")
                 .font(.caption)
                 .foregroundColor(.secondary)
         }
-        .padding()
+        .frame(maxWidth: .infinity, maxHeight: .infinity)
+        .containerBackground(.thinMaterial, for: .widget)
     }
 }
 
-struct ErrorView: View {
-    let message: String
-    
+// MARK: - Authentication Prompt View
+
+struct AuthenticationPromptView: View {
     var body: some View {
-        VStack(spacing: 12) {
-            Image(systemName: "exclamationmark.triangle")
-                .font(.system(size: 24))
-                .foregroundColor(.orange)
-            
-            Text("Unable to load contributions")
-                .font(.headline)
-                .multilineTextAlignment(.center)
-            
-            Text(message)
-                .font(.caption)
-                .multilineTextAlignment(.center)
+        VStack(spacing: 10) {
+            Image(systemName: "person.crop.circle.badge.questionmark")
+                .font(.system(size: 30))
                 .foregroundColor(.secondary)
+            
+            Text("Sign in to GitHub")
+                .font(.headline)
+            
+            Text("Open Pulse to authenticate and enable contribution tracking.")
+                .font(.caption)
+                .foregroundColor(.secondary)
+                .multilineTextAlignment(.center)
+                .padding(.horizontal, 10)
         }
         .padding()
+        .frame(maxWidth: .infinity, maxHeight: .infinity)
+        .containerBackground(.thinMaterial, for: .widget)
+    }
+}
+
+// MARK: - Error View
+
+struct ErrorView: View {
+    let message: String
+
+    var body: some View {
+        VStack(spacing: 10) {
+            Image(systemName: "exclamationmark.triangle.fill")
+                .font(.system(size: 26))
+                .foregroundColor(.orange)
+
+            Text("Unable to Load Data")
+                .font(.headline)
+
+            Text(message)
+                .font(.caption)
+                .foregroundColor(.secondary)
+                .multilineTextAlignment(.center)
+                .padding(.horizontal, 10)
+        }
+        .padding()
+        .frame(maxWidth: .infinity, maxHeight: .infinity)
+        .containerBackground(.thinMaterial, for: .widget)
     }
 }

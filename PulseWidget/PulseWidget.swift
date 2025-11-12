@@ -104,12 +104,3 @@ struct PulseWidget: Widget {
         .supportedFamilies([.systemMedium])
     }
 }
-
-#Preview(as: .systemMedium) {
-    PulseWidget()
-} timeline: {
-    SimpleEntry(date: .now, state: .loading)
-    SimpleEntry(date: .now, state: .notAuthenticated)
-    SimpleEntry(date: .now, state: .error("Network error"))
-    SimpleEntry(date: .now, state: .staleData(ContributionResponse(weeks: [])))
-}
