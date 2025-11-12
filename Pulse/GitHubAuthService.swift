@@ -328,6 +328,11 @@ class GitHubAuthService: ObservableObject {
                         self.isAuthenticated = true
                         self.authState = .authenticated
                         print("🎉 Authentication complete!")
+                        
+                        // Trigger contribution fetching
+                        Task {
+                            await ContributionManager.shared.handleAuthenticationChange()
+                        }
                     } catch {
                         print("❌ Failed to save user info: \(error)")
                         self.handleError(.unknownError("Failed to save user info"))
@@ -356,12 +361,127 @@ class GitHubAuthService: ObservableObject {
         userCode = ""
         verificationURI = ""
         errorMessage = nil
+        
+        // Clear shared data and update widget
+        Task {
+            await ContributionManager.shared.handleAuthenticationChange()
+        }
     }
     
     private func handleError(_ error: AuthError) {
         pollingTimer?.invalidate()
         errorMessage = error.localizedDescription
         authState = .error
+    }
+    
+    func fetchContributions() async throws -> ContributionResponse {
+        guard let token = KeychainManager.shared.retrieveToken() else {
+            throw AuthError.unknownError("No authentication token found")
+        }
+        
+        let query = """
+        query {
+          viewer {
+            contributionsCollection {
+              contributionCalendar {
+                weeks {
+                  contributionDays {
+                    date
+                    contributionCount
+                    contributionLevel
+                  }
+                }
+              }
+            }
+          }
+        }
+        """
+        
+        var request = URLRequest(url: URL(string: "https://api.github.com/graphql")!)
+        request.httpMethod = "POST"
+        request.setValue("Bearer \(token)", forHTTPHeaderField: "Authorization")
+        request.setValue("application/json", forHTTPHeaderField: "Content-Type")
+        
+        let requestBody = ["query": query]
+        request.httpBody = try JSONSerialization.data(withJSONObject: requestBody)
+        
+        print("🔍 Fetching contributions from GitHub GraphQL API...")
+        print("Request URL: \(request.url?.absoluteString ?? "No URL")")
+        
+        let (data, response) = try await URLSession.shared.data(for: request)
+        
+        guard let httpResponse = response as? HTTPURLResponse else {
+            print("❌ No HTTP response received")
+            throw AuthError.networkError("No HTTP response received")
+        }
+        
+        print("📡 HTTP Status Code: \(httpResponse.statusCode)")
+        
+        if httpResponse.statusCode != 200 {
+            let responseString = String(data: data, encoding: .utf8) ?? "Unable to decode response"
+            print("❌ GitHub API Error Response: \(responseString)")
+            throw AuthError.networkError("GitHub API returned status \(httpResponse.statusCode): \(responseString)")
+        }
+        
+        guard let responseString = String(data: data, encoding: .utf8) else {
+            print("❌ Unable to decode response data")
+            throw AuthError.invalidResponse
+        }
+        
+        print("✅ GitHub API Response: \(responseString)")
+        
+        guard let json = try JSONSerialization.jsonObject(with: data) as? [String: Any] else {
+            print("❌ Failed to parse JSON response")
+            throw AuthError.invalidResponse
+        }
+        
+        // Check for GraphQL errors
+        if let errors = json["errors"] as? [[String: Any]] {
+            let errorMessages = errors.compactMap { $0["message"] as? String }
+            print("❌ GraphQL Errors: \(errorMessages.joined(separator: ", "))")
+            throw AuthError.unknownError("GraphQL errors: \(errorMessages.joined(separator: ", "))")
+        }
+        
+        guard let data = json["data"] as? [String: Any],
+              let viewer = data["viewer"] as? [String: Any],
+              let contributionsCollection = viewer["contributionsCollection"] as? [String: Any],
+              let contributionCalendar = contributionsCollection["contributionCalendar"] as? [String: Any],
+              let weeksData = contributionCalendar["weeks"] as? [[String: Any]] else {
+            print("❌ Invalid response structure. JSON keys: \(json.keys)")
+            throw AuthError.invalidResponse
+        }
+        
+        print("✅ Successfully parsed \(weeksData.count) weeks of contribution data")
+        
+        var weeks: [ContributionWeek] = []
+        
+        for weekData in weeksData {
+            guard let daysData = weekData["contributionDays"] as? [[String: Any]] else { continue }
+            
+            var days: [ContributionDay] = []
+            for dayData in daysData {
+                guard let date = dayData["date"] as? String,
+                      let count = dayData["contributionCount"] as? Int,
+                      let levelString = dayData["contributionLevel"] as? String else { continue }
+                
+                let level: Int
+                switch levelString {
+                case "NONE": level = 0
+                case "FIRST_QUARTILE": level = 1
+                case "SECOND_QUARTILE": level = 2
+                case "THIRD_QUARTILE": level = 3
+                case "FOURTH_QUARTILE": level = 4
+                default: level = 0
+                }
+                
+                days.append(ContributionDay(date: date, count: count, level: level))
+            }
+            
+            weeks.append(ContributionWeek(days: days))
+        }
+        
+        print("✅ Created ContributionResponse with \(weeks.count) weeks")
+        return ContributionResponse(weeks: weeks)
     }
     
     deinit {

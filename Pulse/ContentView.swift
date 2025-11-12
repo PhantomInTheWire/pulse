@@ -10,6 +10,7 @@ import Combine
 
 struct ContentView: View {
     @ObservedObject private var authService = GitHubAuthService.shared
+    @StateObject private var contributionManager = ContributionManager.shared
     
     var body: some View {
         VStack(spacing: 20) {
@@ -151,10 +152,36 @@ struct ContentView: View {
             ProgressView()
                 .scaleEffect(1.5)
             
-            Text("Waiting for authorization...")
+            Text("Polling for authorization...")
                 .font(.headline)
             
-            Text("Please complete the authorization in your browser.")
+            VStack(spacing: 8) {
+                Text("Your code:")
+                    .font(.subheadline)
+                    .foregroundColor(.secondary)
+                
+                Text(authService.userCode)
+                    .font(.system(size: 24, weight: .bold, design: .monospaced))
+                    .foregroundColor(.accentColor)
+                    .padding()
+                    .background(Color.gray.opacity(0.1))
+                    .cornerRadius(8)
+                
+                Button(action: {
+                    NSPasteboard.general.clearContents()
+                    NSPasteboard.general.setString(authService.userCode, forType: .string)
+                }) {
+                    HStack {
+                        Image(systemName: "doc.on.doc")
+                        Text("Copy Code")
+                    }
+                    .font(.caption)
+                    .foregroundColor(.accentColor)
+                }
+                .buttonStyle(PlainButtonStyle())
+            }
+            
+            Text("Waiting for you to complete authorization in GitHub...")
                 .font(.body)
                 .foregroundColor(.secondary)
                 .multilineTextAlignment(.center)
@@ -201,26 +228,58 @@ struct ContentView: View {
                 .background(Color.gray.opacity(0.1))
                 .cornerRadius(8)
                 
-                Text("Your GitHub account is connected and ready to use with the Pulse widget.")
-                    .font(.body)
-                    .foregroundColor(.secondary)
-                    .multilineTextAlignment(.center)
-                
-                Button(action: {
-                    authService.logout()
-                }) {
-                    HStack {
-                        Image(systemName: "person.crop.circle.badge.minus")
-                        Text("Disconnect")
+                VStack(spacing: 8) {
+                    Text("Your GitHub account is connected and ready to use with the Pulse widget.")
+                        .font(.body)
+                        .foregroundColor(.secondary)
+                        .multilineTextAlignment(.center)
+                    
+                    if let lastUpdated = SharedDataManager.shared.getLastUpdatedDate() {
+                        HStack {
+                            Image(systemName: "clock")
+                                .foregroundColor(.secondary)
+                            Text("Last updated: \(lastUpdated, style: .relative) ago")
+                                .font(.caption)
+                                .foregroundColor(.secondary)
+                        }
                     }
-                    .font(.headline)
-                    .foregroundColor(.red)
-                    .padding()
-                    .frame(maxWidth: .infinity)
-                    .background(Color.red.opacity(0.1))
-                    .cornerRadius(8)
                 }
-                .buttonStyle(PlainButtonStyle())
+                
+                HStack(spacing: 12) {
+                    Button(action: {
+                        Task {
+                            await ContributionManager.shared.fetchContributions()
+                        }
+                    }) {
+                        HStack {
+                            Image(systemName: "arrow.clockwise")
+                            Text("Refresh")
+                        }
+                        .font(.headline)
+                        .foregroundColor(.white)
+                        .padding()
+                        .frame(maxWidth: .infinity)
+                        .background(Color.accentColor)
+                        .cornerRadius(8)
+                    }
+                    .buttonStyle(PlainButtonStyle())
+                    
+                    Button(action: {
+                        authService.logout()
+                    }) {
+                        HStack {
+                            Image(systemName: "person.crop.circle.badge.minus")
+                            Text("Disconnect")
+                        }
+                        .font(.headline)
+                        .foregroundColor(.red)
+                        .padding()
+                        .frame(maxWidth: .infinity)
+                        .background(Color.red.opacity(0.1))
+                        .cornerRadius(8)
+                    }
+                    .buttonStyle(PlainButtonStyle())
+                }
             }
         }
     }

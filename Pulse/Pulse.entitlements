@@ -4,9 +4,15 @@
 <dict>
 	<key>com.apple.security.app-sandbox</key>
 	<true/>
+	<key>com.apple.security.application-groups</key>
+	<array>
+		<string>group.com.karan.pulseShared</string>
+	</array>
 	<key>com.apple.security.network.client</key>
 	<true/>
-	<key>com.apple.security.network.server</key>
-	<false/>
+	<key>com.apple.security.user-preferences.read</key>
+	<true/>
+	<key>com.apple.security.user-preferences.write</key>
+	<true/>
 </dict>
 </plist>

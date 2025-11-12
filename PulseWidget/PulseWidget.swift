@@ -8,48 +8,86 @@
 import WidgetKit
 import SwiftUI
 
-struct Provider: AppIntentTimelineProvider {
+enum WidgetState {
+    case loading
+    case authenticated(ContributionResponse)
+    case notAuthenticated
+    case error(String)
+    case staleData(ContributionResponse)
+}
+
+struct Provider: TimelineProvider {
     func placeholder(in context: Context) -> SimpleEntry {
-        SimpleEntry(date: Date(), configuration: ConfigurationAppIntent())
+        SimpleEntry(date: Date(), state: .loading)
     }
 
-    func snapshot(for configuration: ConfigurationAppIntent, in context: Context) async -> SimpleEntry {
-        SimpleEntry(date: Date(), configuration: configuration)
+    func getSnapshot(in context: Context, completion: @escaping (SimpleEntry) -> ()) {
+        let entry = fetchEntry(date: Date())
+        completion(entry)
     }
     
-    func timeline(for configuration: ConfigurationAppIntent, in context: Context) async -> Timeline<SimpleEntry> {
-        var entries: [SimpleEntry] = []
-
-        // Generate a timeline consisting of five entries an hour apart, starting from the current date.
+    func getTimeline(in context: Context, completion: @escaping (Timeline<SimpleEntry>) -> ()) {
         let currentDate = Date()
-        for hourOffset in 0 ..< 5 {
-            let entryDate = Calendar.current.date(byAdding: .hour, value: hourOffset, to: currentDate)!
-            let entry = SimpleEntry(date: entryDate, configuration: configuration)
-            entries.append(entry)
+        let entry = fetchEntry(date: currentDate)
+        
+        // Determine next update time based on data freshness
+        let nextUpdate: Date
+        switch entry.state {
+        case .authenticated, .staleData:
+            // If we have data, check again in 2 hours
+            nextUpdate = Calendar.current.date(byAdding: .hour, value: 2, to: currentDate)!
+        case .notAuthenticated, .error, .loading:
+            // If no data or error, check again in 30 minutes
+            nextUpdate = Calendar.current.date(byAdding: .minute, value: 30, to: currentDate)!
         }
-
-        return Timeline(entries: entries, policy: .atEnd)
+        
+        let timeline = Timeline(entries: [entry], policy: .after(nextUpdate))
+        completion(timeline)
     }
 
-//    func relevances() async -> WidgetRelevances<ConfigurationAppIntent> {
-//        // Generate a list containing the contexts this widget is relevant in.
-//    }
+    private func fetchEntry(date: Date) -> SimpleEntry {
+        let sharedData = SharedDataManager.shared
+        
+        // Check if user is authenticated
+        guard sharedData.getIsAuthenticated() else {
+            return SimpleEntry(date: date, state: .notAuthenticated)
+        }
+        
+        // Get contributions from shared storage
+        guard let contributions = sharedData.retrieveContributions() else {
+            return SimpleEntry(date: date, state: .error("No contribution data available"))
+        }
+        
+        // Check if data is fresh
+        if sharedData.isDataFresh() {
+            return SimpleEntry(date: date, state: .authenticated(contributions))
+        } else {
+            return SimpleEntry(date: date, state: .staleData(contributions))
+        }
+    }
 }
 
 struct SimpleEntry: TimelineEntry {
     let date: Date
-    let configuration: ConfigurationAppIntent
+    let state: WidgetState
 }
 
-struct PulseWidgetEntryView : View {
+struct PulseWidgetEntryView: View {
     var entry: Provider.Entry
 
     var body: some View {
-        Text("Time:")
-        Text(entry.date, style: .time)
-
-        Text("Favorite Emoji:")
-        Text(entry.configuration.favoriteEmoji)
+        switch entry.state {
+        case .loading:
+            LoadingView()
+        case .authenticated(let contributions):
+            ContributionHeatmapView(contributions: contributions)
+        case .staleData(let contributions):
+            ContributionHeatmapView(contributions: contributions, isStale: true)
+        case .notAuthenticated:
+            AuthenticationPromptView()
+        case .error(let message):
+            ErrorView(message: message)
+        }
     }
 }
 
@@ -57,30 +95,21 @@ struct PulseWidget: Widget {
     let kind: String = "PulseWidget"
 
     var body: some WidgetConfiguration {
-        AppIntentConfiguration(kind: kind, intent: ConfigurationAppIntent.self, provider: Provider()) { entry in
+        StaticConfiguration(kind: kind, provider: Provider()) { entry in
             PulseWidgetEntryView(entry: entry)
                 .containerBackground(.fill.tertiary, for: .widget)
         }
+        .configurationDisplayName("GitHub Pulse")
+        .description("View your GitHub contribution heatmap")
+        .supportedFamilies([.systemMedium])
     }
 }
 
-extension ConfigurationAppIntent {
-    fileprivate static var smiley: ConfigurationAppIntent {
-        let intent = ConfigurationAppIntent()
-        intent.favoriteEmoji = "😀"
-        return intent
-    }
-    
-    fileprivate static var starEyes: ConfigurationAppIntent {
-        let intent = ConfigurationAppIntent()
-        intent.favoriteEmoji = "🤩"
-        return intent
-    }
-}
-
-#Preview(as: .systemSmall) {
+#Preview(as: .systemMedium) {
     PulseWidget()
 } timeline: {
-    SimpleEntry(date: .now, configuration: .smiley)
-    SimpleEntry(date: .now, configuration: .starEyes)
+    SimpleEntry(date: .now, state: .loading)
+    SimpleEntry(date: .now, state: .notAuthenticated)
+    SimpleEntry(date: .now, state: .error("Network error"))
+    SimpleEntry(date: .now, state: .staleData(ContributionResponse(weeks: [])))
 }
