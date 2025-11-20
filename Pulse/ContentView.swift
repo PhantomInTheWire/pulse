@@ -7,6 +7,11 @@
 
 import SwiftUI
 import Combine
+#if os(macOS)
+import AppKit
+#elseif os(iOS)
+import UIKit
+#endif
 
 struct ContentView: View {
     @ObservedObject private var authService = GitHubAuthService.shared
@@ -111,8 +116,12 @@ struct ContentView: View {
                     .cornerRadius(8)
                 
                 Button(action: {
+                    #if os(macOS)
                     NSPasteboard.general.clearContents()
                     NSPasteboard.general.setString(authService.userCode, forType: .string)
+                    #elseif os(iOS)
+                    UIPasteboard.general.string = authService.userCode
+                    #endif
                 }) {
                     HStack {
                         Image(systemName: "doc.on.doc")
@@ -168,8 +177,12 @@ struct ContentView: View {
                     .cornerRadius(8)
                 
                 Button(action: {
+                    #if os(macOS)
                     NSPasteboard.general.clearContents()
                     NSPasteboard.general.setString(authService.userCode, forType: .string)
+                    #elseif os(iOS)
+                    UIPasteboard.general.string = authService.userCode
+                    #endif
                 }) {
                     HStack {
                         Image(systemName: "doc.on.doc")

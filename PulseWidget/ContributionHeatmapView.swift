@@ -54,41 +54,12 @@ struct ContributionHeatmapView: View {
     }
     
     var body: some View {
-        VStack(alignment: .leading, spacing: 12) {
-            header
+        VStack() {
             heatmap
-            GitHubLegend()
-            
             if isStale {
                 Text("Data may be outdated")
                     .font(.caption2)
                     .foregroundColor(.orange)
-            }
-        }
-        .padding(14)
-        .containerBackground(for: .widget) {
-            Rectangle().fill(.ultraThinMaterial)
-        }
-    }
-    
-    // MARK: Header
-    
-    private var header: some View {
-        HStack {
-            Image(systemName: "square.grid.3x3.fill")
-                .font(.caption)
-                .foregroundColor(.secondary)
-            
-            Text("GitHub Contributions")
-                .font(.caption)
-                .fontWeight(.semibold)
-            
-            Spacer()
-            
-            if isStale {
-                Image(systemName: "clock")
-                    .foregroundColor(.orange)
-                    .font(.caption)
             }
         }
     }
@@ -96,10 +67,10 @@ struct ContributionHeatmapView: View {
     // MARK: Heatmap
     
     private var heatmap: some View {
-        let weeks = contributions.last(weeks: 28)
+        let weeks = contributions.last(weeks: 22)
         
         return LazyHGrid(
-            rows: Array(repeating: GridItem(.fixed(8), spacing: 2), count: 7),
+            rows: Array(repeating: GridItem(.fixed(16), spacing: 3), count: 7),
             spacing: 2
         ) {
             ForEach(weeks.indices, id: \.self) { weekIndex in
@@ -114,7 +85,6 @@ struct ContributionHeatmapView: View {
                 }
             }
         }
-        .padding(.vertical, 4)
     }
 }
 
@@ -128,42 +98,12 @@ struct GitHubContributionCell: View {
     var body: some View {
         RoundedRectangle(cornerRadius: 2)
             .fill(color)
-            .frame(width: 8, height: 8)
+            .frame(width: 11, height: 11)
     }
     
     private var color: Color {
         let palette = DynamicGitHubPalette.palette(accent: Color.accentColor, scheme: scheme)
         return palette[min(max(level, 0), 4)]
-    }
-}
-
-// MARK: - Legend
-
-struct GitHubLegend: View {
-    @Environment(\.colorScheme) private var scheme
-    
-    private var palette: [Color] {
-        DynamicGitHubPalette.palette(accent: Color.accentColor, scheme: scheme)
-    }
-    
-    var body: some View {
-        HStack(spacing: 6) {
-            Text("Less")
-                .font(.caption2)
-                .foregroundColor(.secondary)
-            
-            HStack(spacing: 2) {
-                ForEach(0..<5) { i in
-                    RoundedRectangle(cornerRadius: 2)
-                        .fill(palette[i])
-                        .frame(width: 8, height: 8)
-                }
-            }
-            
-            Text("More")
-                .font(.caption2)
-                .foregroundColor(.secondary)
-        }
     }
 }
 

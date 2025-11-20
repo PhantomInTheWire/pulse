@@ -6,7 +6,9 @@
 //
 
 import Foundation
+#if canImport(AppKit)
 import AppKit
+#endif
 import Combine
 
 class GitHubAuthService: ObservableObject {
@@ -143,7 +145,9 @@ class GitHubAuthService: ObservableObject {
     }
     
     func openVerificationPage() {
+        #if os(macOS)
         NSWorkspace.shared.open(URL(string: verificationURI)!)
+        #endif
     }
     
     func startPollingManually() {

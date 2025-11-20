@@ -104,3 +104,12 @@ struct PulseWidget: Widget {
         .supportedFamilies([.systemMedium])
     }
 }
+
+
+struct PulseWidget_Previews: PreviewProvider {
+    static var previews: some View {
+        PulseWidgetEntryView(entry: SimpleEntry(date: .now, state: .authenticated(ContributionResponse.sample)))
+            .containerBackground(.fill.tertiary, for: .widget)
+            .previewContext(WidgetPreviewContext(family: .systemMedium))
+    }
+}
