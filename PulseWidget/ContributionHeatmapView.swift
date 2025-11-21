@@ -2,6 +2,8 @@
 //  ContributionHeatmapView.swift
 //  PulseWidget
 //
+//  Created by Karan Haresh Lokchandani on 12/11/25.
+//
 
 import SwiftUI
 import WidgetKit
@@ -22,21 +24,26 @@ extension ContributionResponse {
     }
 }
 
-// MARK: - Dynamic Accent-Based Palette
+// MARK: - Theme
 
-struct DynamicGitHubPalette {
-    static func palette(accent: Color, scheme: ColorScheme) -> [Color] {
-        let zero = scheme == .dark
-            ? Color.white.opacity(0.07)
-            : Color.black.opacity(0.08)
-
-        return [
-            zero,
-            accent.opacity(0.30),
-            accent.opacity(0.50),
-            accent.opacity(0.70),
-            accent.opacity(1.0)
-        ]
+struct Theme {
+    static func color(for level: Int, scheme: ColorScheme) -> Color {
+        let baseColor = Color.green
+        
+        switch level {
+        case 0:
+            return scheme == .dark ? Color.white.opacity(0.08) : Color.black.opacity(0.05)
+        case 1:
+            return baseColor.opacity(0.3)
+        case 2:
+            return baseColor.opacity(0.5)
+        case 3:
+            return baseColor.opacity(0.7)
+        case 4:
+            return baseColor.opacity(1.0)
+        default:
+            return scheme == .dark ? Color.white.opacity(0.08) : Color.black.opacity(0.05)
+        }
     }
 }
 
@@ -45,7 +52,10 @@ struct DynamicGitHubPalette {
 struct ContributionHeatmapView: View {
     let contributions: ContributionResponse
     let isStale: Bool
-
+    
+    // Number of weeks to display
+    private let weekCount = 18
+    
     @Environment(\.colorScheme) private var scheme
 
     init(contributions: ContributionResponse, isStale: Bool = false) {
@@ -54,24 +64,32 @@ struct ContributionHeatmapView: View {
     }
     
     var body: some View {
-        VStack() {
-            heatmap
-            if isStale {
-                Text("Data may be outdated")
-                    .font(.caption2)
-                    .foregroundColor(.orange)
-            }
-        }
+        heatmap
+            .padding()
+            .overlay(
+                isStale ? staleOverlay : nil,
+                alignment: .bottomTrailing
+            )
     }
     
-    // MARK: Heatmap
+    // MARK: Components
+    
+    private var staleOverlay: some View {
+        Text("Outdated")
+            .font(.system(size: 8, weight: .bold))
+            .foregroundColor(.orange)
+            .padding(4)
+            .background(Color.black.opacity(0.6))
+            .cornerRadius(4)
+            .padding(4)
+    }
     
     private var heatmap: some View {
-        let weeks = contributions.last(weeks: 22)
+        let weeks = contributions.last(weeks: weekCount)
         
         return LazyHGrid(
-            rows: Array(repeating: GridItem(.fixed(16), spacing: 3), count: 7),
-            spacing: 2
+            rows: Array(repeating: GridItem(.fixed(15), spacing: 3), count: 7),
+            spacing: 3
         ) {
             ForEach(weeks.indices, id: \.self) { weekIndex in
                 let week = weeks[weekIndex]
@@ -92,18 +110,12 @@ struct ContributionHeatmapView: View {
 
 struct GitHubContributionCell: View {
     let level: Int
-    
     @Environment(\.colorScheme) private var scheme
     
     var body: some View {
-        RoundedRectangle(cornerRadius: 2)
-            .fill(color)
-            .frame(width: 11, height: 11)
-    }
-    
-    private var color: Color {
-        let palette = DynamicGitHubPalette.palette(accent: Color.accentColor, scheme: scheme)
-        return palette[min(max(level, 0), 4)]
+        RoundedRectangle(cornerRadius: 4)
+            .fill(Theme.color(for: level, scheme: scheme))
+            .frame(width: 15, height: 15)
     }
 }
 
