@@ -28,21 +28,39 @@ extension ContributionResponse {
 
 struct Theme {
     static func color(for level: Int, scheme: ColorScheme) -> Color {
-        let baseColor = Color.green
-        
-        switch level {
-        case 0:
-            return scheme == .dark ? Color.white.opacity(0.08) : Color.black.opacity(0.05)
-        case 1:
-            return baseColor.opacity(0.3)
-        case 2:
-            return baseColor.opacity(0.5)
-        case 3:
-            return baseColor.opacity(0.7)
-        case 4:
-            return baseColor.opacity(1.0)
-        default:
-            return scheme == .dark ? Color.white.opacity(0.08) : Color.black.opacity(0.05)
+        if scheme == .dark {
+            // Dark mode: use distinct shades for better visibility
+            switch level {
+            case 0:
+                return Color.white.opacity(0.08)
+            case 1:
+                return Color(red: 0.0, green: 0.3, blue: 0.15)
+            case 2:
+                return Color(red: 0.0, green: 0.5, blue: 0.25)
+            case 3:
+                return Color(red: 0.0, green: 0.7, blue: 0.35)
+            case 4:
+                return Color(red: 0.0, green: 0.9, blue: 0.45)
+            default:
+                return Color.white.opacity(0.08)
+            }
+        } else {
+            // Light mode: use opacity on green
+            let baseColor = Color.green
+            switch level {
+            case 0:
+                return Color.black.opacity(0.05)
+            case 1:
+                return baseColor.opacity(0.3)
+            case 2:
+                return baseColor.opacity(0.5)
+            case 3:
+                return baseColor.opacity(0.7)
+            case 4:
+                return baseColor.opacity(0.9)
+            default:
+                return Color.black.opacity(0.05)
+            }
         }
     }
 }
@@ -96,7 +114,7 @@ struct ContributionHeatmapView: View {
                 
                 ForEach(0..<7, id: \.self) { dayIndex in
                     if let day = week.days[safe: dayIndex] {
-                        GitHubContributionCell(level: day.level)
+                        GitHubContributionCell(level: day.level, count: day.count)
                     } else {
                         GitHubContributionCell(level: 0)
                     }
@@ -110,12 +128,19 @@ struct ContributionHeatmapView: View {
 
 struct GitHubContributionCell: View {
     let level: Int
+    var count: Int = 0
     @Environment(\.colorScheme) private var scheme
     
     var body: some View {
-        RoundedRectangle(cornerRadius: 4)
-            .fill(Theme.color(for: level, scheme: scheme))
-            .frame(width: 15, height: 15)
+        if count > 10 {
+            Text("🔥")
+                .font(.system(size: 10))
+                .frame(width: 15, height: 15)
+        } else {
+            RoundedRectangle(cornerRadius: 4)
+                .fill(Theme.color(for: level, scheme: scheme))
+                .frame(width: 15, height: 15)
+        }
     }
 }
 
