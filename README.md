@@ -1,7 +1,7 @@
 # Pulse
 
 A GitHub Contribution Heatmap Widget for iOS and macOS.
-<img src="https://raw.githubusercontent.com/PhantomInTheWire/pulse/main/assets/demo.png" width="800">
+<img width="1242" height="1086" alt="Demo from Pulse" src="https://github.com/user-attachments/assets/f41299b8-2f73-4a14-81be-e2b4b83455db" />
 
 ## Description
 
