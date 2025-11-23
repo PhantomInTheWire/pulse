@@ -187,7 +187,7 @@ class GitHubAuthService: ObservableObject {
                 }
                 
                 // First check if response contains an error (regardless of status code)
-                if let responseString = String(data: data, encoding: .utf8),
+                if let _responseString = String(data: data, encoding: .utf8),
                    let responseData = try? JSONSerialization.jsonObject(with: data, options: []) as? [String: Any],
                    let error = responseData["error"] as? String {
                     
