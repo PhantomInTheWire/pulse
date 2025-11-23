@@ -1,7 +1,7 @@
 # Pulse
 
 A GitHub Contribution Heatmap Widget for iOS and macOS.
-![Demo](assets/demo.png)
+![Demo](https://raw.githubusercontent.com/PhantomInTheWire/pulse/main/assets/demo.png)
 ## Description
 
 Pulse is a native SwiftUI application that displays your GitHub contribution heatmap directly on your device's home screen or desktop via a widget. It securely authenticates with GitHub using the device authorization flow and periodically fetches your contribution data to keep the widget up-to-date.
