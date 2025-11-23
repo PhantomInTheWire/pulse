@@ -1,7 +1,12 @@
 # Pulse
 
 A GitHub Contribution Heatmap Widget for iOS and macOS.
+
+---
+
 ![Demo from Pulse](https://github.com/user-attachments/assets/1eb16506-036b-4fa3-bfd0-e1cd7734b156)
+
+---
 
 ## Description
 
