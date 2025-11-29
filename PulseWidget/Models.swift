@@ -72,13 +72,13 @@ extension ContributionResponse {
                 let count: Int
                 
                 switch randomValue {
-                case 0...1: // 20% chance of no contributions
+                case 0: // 10% chance of no contributions
                     level = 0
                     count = 0
-                case 2...7: // 60% chance of low
+                case 1...6: // 60% chance of low
                     level = 1
                     count = Int.random(in: 1...3)
-                case 8...9: // 20% chance of medium
+                case 7...9: // 30% chance of medium
                     level = 2
                     count = Int.random(in: 4...7)
                 case 10: // 10% chance of high/very high

@@ -97,7 +97,10 @@ struct PulseWidget: Widget {
     var body: some WidgetConfiguration {
         StaticConfiguration(kind: kind, provider: Provider()) { entry in
             PulseWidgetEntryView(entry: entry)
-                .containerBackground(.fill.tertiary, for: .widget)
+                .containerBackground(for: .widget) {
+                    ContainerRelativeShape()
+                        .fill(.background)
+                }
         }
         .configurationDisplayName("GitHub Pulse")
         .description("View your GitHub contribution heatmap")
@@ -109,7 +112,10 @@ struct PulseWidget: Widget {
 struct PulseWidget_Previews: PreviewProvider {
     static var previews: some View {
         PulseWidgetEntryView(entry: SimpleEntry(date: .now, state: .authenticated(ContributionResponse.sample)))
-            .containerBackground(.fill.tertiary, for: .widget)
+            .containerBackground(for: .widget) {
+                ContainerRelativeShape()
+                    .fill(.background)
+            }
             .previewContext(WidgetPreviewContext(family: .systemMedium))
     }
 }

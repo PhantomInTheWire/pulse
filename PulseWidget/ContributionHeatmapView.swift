@@ -24,44 +24,21 @@ extension ContributionResponse {
     }
 }
 
-// MARK: - Theme
+// MARK: - Dynamic Accent-Based Palette
 
-struct Theme {
-    static func color(for level: Int, scheme: ColorScheme) -> Color {
-        if scheme == .dark {
-            // Dark mode: use distinct shades for better visibility
-            switch level {
-            case 0:
-                return Color.white.opacity(0.08)
-            case 1:
-                return Color(red: 0.0, green: 0.3, blue: 0.15)
-            case 2:
-                return Color(red: 0.0, green: 0.5, blue: 0.25)
-            case 3:
-                return Color(red: 0.0, green: 0.7, blue: 0.35)
-            case 4:
-                return Color(red: 0.0, green: 0.9, blue: 0.45)
-            default:
-                return Color.white.opacity(0.08)
-            }
-        } else {
-            // Light mode: use opacity on green
-            let baseColor = Color.green
-            switch level {
-            case 0:
-                return Color.black.opacity(0.05)
-            case 1:
-                return baseColor.opacity(0.3)
-            case 2:
-                return baseColor.opacity(0.5)
-            case 3:
-                return baseColor.opacity(0.7)
-            case 4:
-                return baseColor.opacity(0.9)
-            default:
-                return Color.black.opacity(0.05)
-            }
-        }
+struct DynamicGitHubPalette {
+    static func palette(accent: Color, scheme: ColorScheme) -> [Color] {
+        let zero = scheme == .dark
+            ? Color.white.opacity(0.07)
+            : Color.black.opacity(0.08)
+
+        return [
+            zero,
+            accent.opacity(0.30),
+            accent.opacity(0.50),
+            accent.opacity(0.70),
+            accent.opacity(1.0)
+        ]
     }
 }
 
@@ -131,14 +108,32 @@ struct GitHubContributionCell: View {
     var count: Int = 0
     @Environment(\.colorScheme) private var scheme
     
+    // Map contribution count to color level
+    private func countToLevel(_ count: Int) -> Int {
+        switch count {
+        case 0:
+            return 0
+        case 1...3:
+            return 1
+        case 4...6:
+            return 2
+        case 7...9:
+            return 3
+        default: // 10+
+            return 4
+        }
+    }
+    
     var body: some View {
         if count > 10 {
             Text("🔥")
                 .font(.system(size: 10))
                 .frame(width: 15, height: 15)
         } else {
+            let palette = DynamicGitHubPalette.palette(accent: .accentColor, scheme: scheme)
+            let colorLevel = countToLevel(count)
             RoundedRectangle(cornerRadius: 4)
-                .fill(Theme.color(for: level, scheme: scheme))
+                .fill(palette[colorLevel])
                 .frame(width: 15, height: 15)
         }
     }
