@@ -109,7 +109,7 @@ class GitHubAuthService: ObservableObject {
         Task {
             do {
                 let response = try await GitHubAPIClient.shared.pollForToken(clientID: clientID, deviceCode: deviceCode)
-                await handleSuccessfulAuth(token: response.access_token)
+                handleSuccessfulAuth(token: response.access_token)
             } catch let error as AuthError {
                 await MainActor.run {
                     switch error {
