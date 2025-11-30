@@ -30,7 +30,7 @@ struct Provider: TimelineProvider {
         let currentDate = Date()
         let entry = fetchEntry(date: currentDate)
         
-        // Determine next update time based on data freshness
+
         let nextUpdate: Date
         switch entry.state {
         case .authenticated, .staleData:
@@ -64,25 +64,6 @@ struct Provider: TimelineProvider {
 struct SimpleEntry: TimelineEntry {
     let date: Date
     let state: WidgetState
-}
-
-struct PulseWidgetEntryView: View {
-    var entry: Provider.Entry
-
-    var body: some View {
-        switch entry.state {
-        case .loading:
-            LoadingView()
-        case .authenticated(let contributions):
-            ContributionHeatmapView(contributions: contributions)
-        case .staleData(let contributions):
-            ContributionHeatmapView(contributions: contributions, isStale: true)
-        case .notAuthenticated:
-            AuthenticationPromptView()
-        case .error(let message):
-            ErrorView(message: message)
-        }
-    }
 }
 
 struct PulseWidget: Widget {
