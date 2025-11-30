@@ -54,7 +54,8 @@
 		E69FE8862EDCD0A400E85AC6 /* Exceptions for "Pulse" folder in "PulseWidgetExtension" target */ = {
 			isa = PBXFileSystemSynchronizedBuildFileExceptionSet;
 			membershipExceptions = (
-				Services/SharedDataManager.swift,
+				Shared/GitHubAuthModels.swift,
+				Shared/SharedDataManager.swift,
 			);
 			target = E66891E72EC3C21800105332 /* PulseWidgetExtension */;
 		};

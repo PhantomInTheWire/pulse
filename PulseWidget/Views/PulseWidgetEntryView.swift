@@ -22,7 +22,7 @@ struct PulseWidgetEntryView: View {
         case .notAuthenticated:
             AuthenticationPromptView()
         case .error(let message):
-            ErrorView(error: message)
+            ErrorView(message: message)
         }
     }
 }
