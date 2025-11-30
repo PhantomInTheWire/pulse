@@ -20,25 +20,34 @@ class SharedDataManager {
     }
 
     private init() {
-        // Use shared UserDefaults for app group communication
-        print("🔍 Attempting to create shared UserDefaults with suite: \(appGroupID)")
+
+        NSLog("SharedDataManager: Attempting to create shared UserDefaults with suite: \(appGroupID)")
 
         if let sharedDefaults = UserDefaults(suiteName: appGroupID) {
-            self.userDefaults = sharedDefaults
-            print("✅ Successfully created shared UserDefaults for app group: \(appGroupID)")
+            NSLog("SharedDataManager: Successfully created shared UserDefaults for app group: \(appGroupID)")
 
-            // Test write/read to verify it works
             sharedDefaults.set("test_value", forKey: "shared_test")
+            sharedDefaults.synchronize()
+
             if sharedDefaults.string(forKey: "shared_test") == "test_value" {
-                print("✅ Shared UserDefaults read/write test passed")
+                NSLog("SharedDataManager: Shared UserDefaults read/write test passed")
                 sharedDefaults.removeObject(forKey: "shared_test")
+                sharedDefaults.synchronize()
+                self.userDefaults = sharedDefaults
             } else {
-                print("❌ Shared UserDefaults read/write test failed")
+                NSLog("SharedDataManager: Shared UserDefaults read/write test failed - falling back to UserDefaults.standard")
+                self.userDefaults = UserDefaults.standard
             }
         } else {
-            print("❌ Failed to create shared UserDefaults for app group: \(appGroupID)")
-            print("⚠️ Falling back to UserDefaults.standard - data sharing will not work!")
+            NSLog("SharedDataManager: Failed to create shared UserDefaults for app group: \(appGroupID)")
+            NSLog("SharedDataManager: Falling back to UserDefaults.standard - data sharing will not work!")
             self.userDefaults = UserDefaults.standard
+        }
+
+        if self.userDefaults == UserDefaults.standard {
+            NSLog("SharedDataManager: Using UserDefaults.standard - SHARED DATA WILL NOT WORK!")
+        } else {
+            NSLog("SharedDataManager: Using shared UserDefaults for data access")
         }
     }
 
@@ -51,7 +60,7 @@ class SharedDataManager {
             userDefaults.set(Date(), forKey: Keys.lastUpdated)
             userDefaults.set(true, forKey: Keys.isAuthenticated)
             userDefaults.synchronize()
-            print("✅ Saved \(contributions.weeks.count) weeks of contributions to UserDefaults")
+            print("Saved \(contributions.weeks.count) weeks of contributions to UserDefaults")
         } catch {
             print("Failed to save contributions: \(error)")
         }
@@ -91,9 +100,20 @@ class SharedDataManager {
     }
 
     func getIsAuthenticated() -> Bool {
+        NSLog("SharedDataManager: Checking authentication state...")
+        NSLog("SharedDataManager: UserDefaults instance type: \(type(of: userDefaults))")
+        NSLog("SharedDataManager: Is UserDefaults.standard? \(userDefaults == UserDefaults.standard)")
+
+        let hasKey = userDefaults.object(forKey: Keys.isAuthenticated) != nil
+        NSLog("SharedDataManager: Has '\(Keys.isAuthenticated)' key? \(hasKey)")
+
         let isAuthenticated = userDefaults.bool(forKey: Keys.isAuthenticated)
-        print("🔍 Main App: getIsAuthenticated() = \(isAuthenticated)")
-        print("🔍 Main App: UserDefaults keys available: \(userDefaults.dictionaryRepresentation().keys)")
+        NSLog("SharedDataManager: getIsAuthenticated() = \(isAuthenticated)")
+
+        if userDefaults == UserDefaults.standard {
+            NSLog("SharedDataManager: UserDefaults keys (first 10): \(Array(userDefaults.dictionaryRepresentation().keys.prefix(10)))")
+        }
+
         return isAuthenticated
     }
 
