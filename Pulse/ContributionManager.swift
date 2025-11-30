@@ -23,22 +23,17 @@ class ContributionManager: ObservableObject {
     // MARK: - Public Methods
     
     func fetchContributionsIfNeeded() async {
-        // Only fetch if authenticated and data is stale
-        guard authService.isAuthenticated,
-              !sharedData.isDataFresh() else {
-            return
-        }
-        
+        guard authService.isAuthenticated, !sharedData.isDataFresh() else { return }
         await fetchContributions()
     }
     
     func fetchContributions() async {
         guard authService.isAuthenticated else {
-            print("❌ Cannot fetch contributions: not authenticated")
+            print("Cannot fetch contributions: not authenticated")
             return
         }
         
-        print("🔄 Starting contribution fetch...")
+        print("Starting contribution fetch...")
         
         do {
             let contributions = try await authService.fetchContributions()
@@ -47,29 +42,22 @@ class ContributionManager: ObservableObject {
                 sharedData.saveContributions(contributions)
                 sharedData.setAuthenticated(true)
                 updateWidgetTimeline()
-                print("✅ Contributions saved and widget updated successfully")
+                print("Contributions saved and widget updated successfully")
             }
         } catch {
-            print("❌ Failed to fetch contributions: \(error.localizedDescription)")
-            print("❌ Full error: \(error)")
+            print("Failed to fetch contributions: \(error.localizedDescription)")
         }
     }
     
     // MARK: - Periodic Fetching
     
     private func setupPeriodicFetching() {
-        // Fetch every 2 hours
         fetchTimer = Timer.scheduledTimer(withTimeInterval: 2 * 60 * 60, repeats: true) { [weak self] _ in
-            Task {
-                await self?.fetchContributionsIfNeeded()
-            }
+            Task { await self?.fetchContributionsIfNeeded() }
         }
         
-        // Initial fetch after a short delay
         DispatchQueue.main.asyncAfter(deadline: .now() + 5.0) {
-            Task {
-                await self.fetchContributionsIfNeeded()
-            }
+            Task { await self.fetchContributionsIfNeeded() }
         }
     }
     

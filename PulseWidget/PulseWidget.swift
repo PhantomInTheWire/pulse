@@ -34,10 +34,8 @@ struct Provider: TimelineProvider {
         let nextUpdate: Date
         switch entry.state {
         case .authenticated, .staleData:
-            // If we have data, check again in 2 hours
             nextUpdate = Calendar.current.date(byAdding: .hour, value: 2, to: currentDate)!
         case .notAuthenticated, .error, .loading:
-            // If no data or error, check again in 30 minutes
             nextUpdate = Calendar.current.date(byAdding: .minute, value: 30, to: currentDate)!
         }
         
@@ -48,22 +46,18 @@ struct Provider: TimelineProvider {
     private func fetchEntry(date: Date) -> SimpleEntry {
         let sharedData = SharedDataManager.shared
         
-        // Check if user is authenticated
         guard sharedData.getIsAuthenticated() else {
             return SimpleEntry(date: date, state: .notAuthenticated)
         }
         
-        // Get contributions from shared storage
         guard let contributions = sharedData.retrieveContributions() else {
             return SimpleEntry(date: date, state: .error("No contribution data available"))
         }
         
-        // Check if data is fresh
-        if sharedData.isDataFresh() {
-            return SimpleEntry(date: date, state: .authenticated(contributions))
-        } else {
-            return SimpleEntry(date: date, state: .staleData(contributions))
-        }
+        return SimpleEntry(
+            date: date,
+            state: sharedData.isDataFresh() ? .authenticated(contributions) : .staleData(contributions)
+        )
     }
 }
 

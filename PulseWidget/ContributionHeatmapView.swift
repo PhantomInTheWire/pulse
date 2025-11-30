@@ -8,30 +8,9 @@
 import SwiftUI
 import WidgetKit
 
-// MARK: - Safe Array Access
-
-extension Array {
-    subscript(safe index: Index) -> Element? {
-        indices.contains(index) ? self[index] : nil
-    }
-}
-
-// MARK: - Last N Weeks Extension
-
-extension ContributionResponse {
-    func last(weeks count: Int) -> [ContributionWeek] {
-        Array(weeks.suffix(count))
-    }
-}
-
-// MARK: - Dynamic Accent-Based Palette
-
 struct DynamicGitHubPalette {
     static func palette(accent: Color, scheme: ColorScheme) -> [Color] {
-        let zero = scheme == .dark
-            ? Color.white.opacity(0.07)
-            : Color.black.opacity(0.08)
-
+        let zero = scheme == .dark ? Color.white.opacity(0.07) : Color.black.opacity(0.08)
         return [
             zero,
             accent.opacity(0.30),
@@ -47,8 +26,6 @@ struct DynamicGitHubPalette {
 struct ContributionHeatmapView: View {
     let contributions: ContributionResponse
     let isStale: Bool
-    
-    // Number of weeks to display
     private let weekCount = 18
     
     @Environment(\.colorScheme) private var scheme
@@ -108,19 +85,13 @@ struct GitHubContributionCell: View {
     var count: Int = 0
     @Environment(\.colorScheme) private var scheme
     
-    // Map contribution count to color level
     private func countToLevel(_ count: Int) -> Int {
         switch count {
-        case 0:
-            return 0
-        case 1...3:
-            return 1
-        case 4...6:
-            return 2
-        case 7...9:
-            return 3
-        default: // 10+
-            return 4
+        case 0: return 0
+        case 1...3: return 1
+        case 4...6: return 2
+        case 7...9: return 3
+        default: return 4
         }
     }
     
