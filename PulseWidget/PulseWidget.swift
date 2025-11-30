@@ -73,7 +73,7 @@ struct PulseWidget: Widget {
             PulseWidgetEntryView(entry: entry)
                 .containerBackground(for: .widget) {
                     ContainerRelativeShape()
-                        .fill(.background)
+                        .fill(Color("WidgetBackground"))
                 }
         }
         .configurationDisplayName("GitHub Pulse")

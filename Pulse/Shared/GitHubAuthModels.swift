@@ -117,10 +117,10 @@ extension ContributionResponse {
                 let count: Int
 
                 switch randomValue {
-                case 0:
+                case 0...2:
                     level = 0
                     count = 0
-                case 1...6:
+                case 3...6:
                     level = 1
                     count = Int.random(in: 1...3)
                 case 7...9:
