@@ -82,13 +82,10 @@ struct PulseWidget: Widget {
     }
 }
 
-struct PulseWidget_Previews: PreviewProvider {
-    static var previews: some View {
-        PulseWidgetEntryView(entry: SimpleEntry(date: .now, state: .authenticated(ContributionResponse.sample)))
-            .containerBackground(for: .widget) {
-                ContainerRelativeShape()
-                    .fill(.background)
-            }
-            .previewContext(WidgetPreviewContext(family: .systemMedium))
-    }
+#Preview(as: .systemMedium) {
+    PulseWidget()
+} timeline: {
+    SimpleEntry(date: .now, state: .authenticated(ContributionResponse.sample))
+    SimpleEntry(date: .now, state: .loading)
+    SimpleEntry(date: .now, state: .notAuthenticated)
 }
