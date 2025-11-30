@@ -65,6 +65,15 @@ struct SimpleEntry: TimelineEntry {
     let state: WidgetState
 }
 
+struct WidgetBackground: View {
+    @Environment(\.colorScheme) var colorScheme
+
+    var body: some View {
+        ContainerRelativeShape()
+            .fill(colorScheme == .dark ? Color.black : Color.white)
+    }
+}
+
 struct PulseWidget: Widget {
     let kind: String = "PulseWidget"
 
@@ -72,8 +81,7 @@ struct PulseWidget: Widget {
         StaticConfiguration(kind: kind, provider: Provider()) { entry in
             PulseWidgetEntryView(entry: entry)
                 .containerBackground(for: .widget) {
-                    ContainerRelativeShape()
-                        .fill(Color("WidgetBackground"))
+                    WidgetBackground()
                 }
         }
         .configurationDisplayName("GitHub Pulse")

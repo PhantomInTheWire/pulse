@@ -9,7 +9,7 @@ import SwiftUI
 
 struct DynamicGitHubPalette {
     static func palette(accent: Color, scheme: ColorScheme) -> [Color] {
-        let zero = scheme == .dark ? Color.white.opacity(0.1) : Color.black.opacity(0.1)
+        let zero = scheme == .dark ? Color.white.opacity(0.15) : Color.black.opacity(0.15)
         return [
             zero,
             accent.opacity(0.30),
