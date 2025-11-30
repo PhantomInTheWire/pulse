@@ -9,7 +9,7 @@ import SwiftUI
 
 struct HomeView: View {
     @ObservedObject var authService: GitHubAuthService
-    
+
     var body: some View {
         VStack(spacing: 16) {
             if let user = authService.currentUser {
@@ -28,20 +28,20 @@ struct HomeView: View {
                     }
                     .frame(width: 48, height: 48)
                     .clipShape(Circle())
-                    
+
                     VStack(alignment: .leading, spacing: 2) {
                         Text(user.login)
                             .font(.headline)
-                        
+
                         if let name = user.name {
                             Text(name)
                                 .font(.caption)
                                 .foregroundColor(.secondary)
                         }
                     }
-                    
+
                     Spacer()
-                    
+
                     Image(systemName: "checkmark.circle.fill")
                         .foregroundColor(.green)
                         .font(.title2)
@@ -49,13 +49,13 @@ struct HomeView: View {
                 .padding()
                 .background(Color.gray.opacity(0.1))
                 .cornerRadius(8)
-                
+
                 VStack(spacing: 8) {
                     Text("Your GitHub account is connected and ready to use with the Pulse widget.")
                         .font(.body)
                         .foregroundColor(.secondary)
                         .multilineTextAlignment(.center)
-                    
+
                     if let lastUpdated = SharedDataManager.shared.getLastUpdatedDate() {
                         HStack {
                             Image(systemName: "clock")
@@ -66,7 +66,7 @@ struct HomeView: View {
                         }
                     }
                 }
-                
+
                 HStack(spacing: 12) {
                     Button(action: {
                         Task {
@@ -85,7 +85,7 @@ struct HomeView: View {
                         .cornerRadius(8)
                     }
                     .buttonStyle(PlainButtonStyle())
-                    
+
                     Button(action: {
                         authService.logout()
                     }) {

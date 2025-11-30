@@ -9,24 +9,24 @@ import Foundation
 
 class SharedDataManager {
     static let shared = SharedDataManager()
-    
+
     private let userDefaults: UserDefaults
     private let appGroupID = "group.com.karan.pulseShared"
-    
+
     private struct Keys {
         static let contributions = "contributions"
         static let lastUpdated = "lastUpdated"
         static let isAuthenticated = "isAuthenticated"
     }
-    
+
     private init() {
         // Use shared UserDefaults for app group communication
         print("🔍 Attempting to create shared UserDefaults with suite: \(appGroupID)")
-        
+
         if let sharedDefaults = UserDefaults(suiteName: appGroupID) {
             self.userDefaults = sharedDefaults
             print("✅ Successfully created shared UserDefaults for app group: \(appGroupID)")
-            
+
             // Test write/read to verify it works
             sharedDefaults.set("test_value", forKey: "shared_test")
             if sharedDefaults.string(forKey: "shared_test") == "test_value" {
@@ -41,9 +41,9 @@ class SharedDataManager {
             self.userDefaults = UserDefaults.standard
         }
     }
-    
+
     // MARK: - Contribution Data
-    
+
     func saveContributions(_ contributions: ContributionResponse) {
         do {
             let data = try JSONEncoder().encode(contributions)
@@ -56,12 +56,12 @@ class SharedDataManager {
             print("Failed to save contributions: \(error)")
         }
     }
-    
+
     func retrieveContributions() -> ContributionResponse? {
         guard let data = userDefaults.data(forKey: Keys.contributions) else {
             return nil
         }
-        
+
         do {
             return try JSONDecoder().decode(ContributionResponse.self, from: data)
         } catch {
@@ -69,36 +69,36 @@ class SharedDataManager {
             return nil
         }
     }
-    
+
     func getLastUpdatedDate() -> Date? {
-        return userDefaults.object(forKey: Keys.lastUpdated) as? Date
+        userDefaults.object(forKey: Keys.lastUpdated) as? Date
     }
-    
-    func isDataFresh(maxAge: TimeInterval = 4 * 60 * 60) -> Bool { // 4 hours default
+
+    func isDataFresh(maxAge: TimeInterval = 4 * 60 * 60) -> Bool {  // 4 hours default
         guard let lastUpdated = getLastUpdatedDate() else {
             return false
         }
-        
+
         let timeSinceUpdate = Date().timeIntervalSince(lastUpdated)
         return timeSinceUpdate < maxAge
     }
-    
+
     // MARK: - Authentication State
-    
+
     func setAuthenticated(_ authenticated: Bool) {
         userDefaults.set(authenticated, forKey: Keys.isAuthenticated)
         userDefaults.synchronize()
     }
-    
+
     func getIsAuthenticated() -> Bool {
         let isAuthenticated = userDefaults.bool(forKey: Keys.isAuthenticated)
         print("🔍 Main App: getIsAuthenticated() = \(isAuthenticated)")
         print("🔍 Main App: UserDefaults keys available: \(userDefaults.dictionaryRepresentation().keys)")
         return isAuthenticated
     }
-    
+
     // MARK: - Data Management
-    
+
     func clearAllData() {
         userDefaults.removeObject(forKey: Keys.contributions)
         userDefaults.removeObject(forKey: Keys.lastUpdated)

@@ -5,8 +5,8 @@
 //  Created by Karan Haresh Lokchandani on 12/11/25.
 //
 
-import WidgetKit
 import AppIntents
+import WidgetKit
 
 struct ConfigurationAppIntent: WidgetConfigurationIntent {
     static var title: LocalizedStringResource { "Pulse Configuration" }

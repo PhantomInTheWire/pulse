@@ -11,7 +11,7 @@ struct GitHubContributionCell: View {
     let level: Int
     var count: Int = 0
     @Environment(\.colorScheme) private var scheme
-    
+
     private func countToLevel(_ count: Int) -> Int {
         switch count {
         case 0: return 0
@@ -21,7 +21,7 @@ struct GitHubContributionCell: View {
         default: return 4
         }
     }
-    
+
     var body: some View {
         if count > 10 {
             Text("🔥")

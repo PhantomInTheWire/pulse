@@ -8,22 +8,20 @@
 import SwiftUI
 import WidgetKit
 
-
-
 // MARK: - Heatmap View
 
 struct ContributionHeatmapView: View {
     let contributions: ContributionResponse
     let isStale: Bool
     private let weekCount = 18
-    
+
     @Environment(\.colorScheme) private var scheme
 
     init(contributions: ContributionResponse, isStale: Bool = false) {
         self.contributions = contributions
         self.isStale = isStale
     }
-    
+
     var body: some View {
         heatmap
             .padding()
@@ -32,9 +30,9 @@ struct ContributionHeatmapView: View {
                 alignment: .bottomTrailing
             )
     }
-    
+
     // MARK: Components
-    
+
     private var staleOverlay: some View {
         Text("Outdated")
             .font(.system(size: 8, weight: .bold))
@@ -44,17 +42,17 @@ struct ContributionHeatmapView: View {
             .cornerRadius(4)
             .padding(4)
     }
-    
+
     private var heatmap: some View {
         let weeks = contributions.last(weeks: weekCount)
-        
+
         return LazyHGrid(
             rows: Array(repeating: GridItem(.fixed(15), spacing: 3), count: 7),
             spacing: 3
         ) {
             ForEach(weeks.indices, id: \.self) { weekIndex in
                 let week = weeks[weekIndex]
-                
+
                 ForEach(0..<7, id: \.self) { dayIndex in
                     if let day = week.days[safe: dayIndex] {
                         GitHubContributionCell(level: day.level, count: day.count)
@@ -66,5 +64,3 @@ struct ContributionHeatmapView: View {
         }
     }
 }
-
-

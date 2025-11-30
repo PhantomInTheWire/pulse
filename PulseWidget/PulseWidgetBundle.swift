@@ -5,8 +5,8 @@
 //  Created by Karan Haresh Lokchandani on 12/11/25.
 //
 
-import WidgetKit
 import SwiftUI
+import WidgetKit
 
 @main
 struct PulseWidgetBundle: WidgetBundle {

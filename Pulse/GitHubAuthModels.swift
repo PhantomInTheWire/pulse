@@ -49,7 +49,7 @@ enum ContributionLevel: Int, CaseIterable, Codable {
     case medium = 2
     case high = 3
     case veryHigh = 4
-    
+
     var opacity: Double {
         switch self {
         case .zero: return 0.0
@@ -68,7 +68,7 @@ enum AuthError: Error, LocalizedError {
     case accessDenied
     case slowDown
     case unknownError(String)
-    
+
     var errorDescription: String? {
         switch self {
         case .networkError(let message):

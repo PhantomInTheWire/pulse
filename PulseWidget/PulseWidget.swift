@@ -5,8 +5,8 @@
 //  Created by Karan Haresh Lokchandani on 12/11/25.
 //
 
-import WidgetKit
 import SwiftUI
+import WidgetKit
 
 enum WidgetState {
     case loading
@@ -21,15 +21,14 @@ struct Provider: TimelineProvider {
         SimpleEntry(date: Date(), state: .loading)
     }
 
-    func getSnapshot(in context: Context, completion: @escaping (SimpleEntry) -> ()) {
+    func getSnapshot(in context: Context, completion: @escaping (SimpleEntry) -> Void) {
         let entry = fetchEntry(date: Date())
         completion(entry)
     }
-    
-    func getTimeline(in context: Context, completion: @escaping (Timeline<SimpleEntry>) -> ()) {
+
+    func getTimeline(in context: Context, completion: @escaping (Timeline<SimpleEntry>) -> Void) {
         let currentDate = Date()
         let entry = fetchEntry(date: currentDate)
-        
 
         let nextUpdate: Date
         switch entry.state {
@@ -38,22 +37,22 @@ struct Provider: TimelineProvider {
         case .notAuthenticated, .error, .loading:
             nextUpdate = Calendar.current.date(byAdding: .minute, value: 30, to: currentDate)!
         }
-        
+
         let timeline = Timeline(entries: [entry], policy: .after(nextUpdate))
         completion(timeline)
     }
 
     private func fetchEntry(date: Date) -> SimpleEntry {
         let sharedData = SharedDataManager.shared
-        
+
         guard sharedData.getIsAuthenticated() else {
             return SimpleEntry(date: date, state: .notAuthenticated)
         }
-        
+
         guard let contributions = sharedData.retrieveContributions() else {
             return SimpleEntry(date: date, state: .error("No contribution data available"))
         }
-        
+
         return SimpleEntry(
             date: date,
             state: sharedData.isDataFresh() ? .authenticated(contributions) : .staleData(contributions)
@@ -82,7 +81,6 @@ struct PulseWidget: Widget {
         .supportedFamilies([.systemMedium])
     }
 }
-
 
 struct PulseWidget_Previews: PreviewProvider {
     static var previews: some View {

@@ -15,7 +15,7 @@ struct DynamicGitHubPalette {
             accent.opacity(0.30),
             accent.opacity(0.50),
             accent.opacity(0.70),
-            accent.opacity(1.0)
+            accent.opacity(1.0),
         ]
     }
 }

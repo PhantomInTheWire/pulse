@@ -13,7 +13,7 @@ struct PulseApp: App {
         // Initialize the contribution manager to start periodic fetching
         _ = ContributionManager.shared
     }
-    
+
     var body: some Scene {
         WindowGroup {
             ContentView()

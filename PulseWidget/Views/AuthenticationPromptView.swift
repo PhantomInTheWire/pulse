@@ -13,10 +13,10 @@ struct AuthenticationPromptView: View {
             Image(systemName: "person.crop.circle.badge.exclamationmark")
                 .font(.system(size: 30))
                 .foregroundColor(.secondary)
-            
+
             Text("Sign in to GitHub")
                 .font(.headline)
-            
+
             Text("Open Pulse to authenticate.")
                 .font(.caption)
                 .foregroundColor(.secondary)
