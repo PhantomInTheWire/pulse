@@ -51,11 +51,21 @@
 			);
 			target = E66891E72EC3C21800105332 /* PulseWidgetExtension */;
 		};
+		E69FE8862EDCD0A400E85AC6 /* Exceptions for "Pulse" folder in "PulseWidgetExtension" target */ = {
+			isa = PBXFileSystemSynchronizedBuildFileExceptionSet;
+			membershipExceptions = (
+				Services/SharedDataManager.swift,
+			);
+			target = E66891E72EC3C21800105332 /* PulseWidgetExtension */;
+		};
 /* End PBXFileSystemSynchronizedBuildFileExceptionSet section */
 
 /* Begin PBXFileSystemSynchronizedRootGroup section */
 		E668917C2EC3BED800105332 /* Pulse */ = {
 			isa = PBXFileSystemSynchronizedRootGroup;
+			exceptions = (
+				E69FE8862EDCD0A400E85AC6 /* Exceptions for "Pulse" folder in "PulseWidgetExtension" target */,
+			);
 			path = Pulse;
 			sourceTree = "<group>";
 		};
