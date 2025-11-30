@@ -86,3 +86,60 @@ enum AuthError: Error, LocalizedError {
         }
     }
 }
+
+// MARK: - Sample Data for Previews
+
+#if DEBUG
+extension ContributionResponse {
+    static let sample: ContributionResponse = {
+        var weeks: [ContributionWeek] = []
+        let calendar = Calendar.current
+        let today = Date()
+
+        for weekOffset in (0..<53).reversed() {
+            var days: [ContributionDay] = []
+
+            guard let weekDate = calendar.date(byAdding: .weekOfYear, value: -weekOffset, to: today),
+                let weekStart = calendar.date(from: calendar.dateComponents([.yearForWeekOfYear, .weekOfYear], from: weekDate))
+            else {
+                continue
+            }
+
+            for dayOffset in 0..<7 {
+                guard let date = calendar.date(byAdding: .day, value: dayOffset, to: weekStart) else { continue }
+
+                let dateFormatter = DateFormatter()
+                dateFormatter.dateFormat = "yyyy-MM-dd"
+                let dateString = dateFormatter.string(from: date)
+
+                let randomValue = Int.random(in: 0...10)
+                let level: Int
+                let count: Int
+
+                switch randomValue {
+                case 0:
+                    level = 0
+                    count = 0
+                case 1...6:
+                    level = 1
+                    count = Int.random(in: 1...3)
+                case 7...9:
+                    level = 2
+                    count = Int.random(in: 4...7)
+                case 10:
+                    level = Int.random(in: 3...4)
+                    count = Int.random(in: 8...15)
+                default:
+                    level = 0
+                    count = 0
+                }
+
+                days.append(ContributionDay(date: dateString, count: count, level: level))
+            }
+            weeks.append(ContributionWeek(days: days))
+        }
+
+        return ContributionResponse(weeks: weeks)
+    }()
+}
+#endif
