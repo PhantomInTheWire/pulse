@@ -9,6 +9,7 @@ import SwiftUI
 
 struct HomeView: View {
     @ObservedObject var authService: GitHubAuthService
+    @ObservedObject private var contributionManager = ContributionManager.shared
 
     var body: some View {
         VStack(spacing: 16) {
@@ -56,7 +57,7 @@ struct HomeView: View {
                         .foregroundColor(.secondary)
                         .multilineTextAlignment(.center)
 
-                    if let lastUpdated = SharedDataManager.shared.getLastUpdatedDate() {
+                    if let lastUpdated = contributionManager.lastUpdated {
                         HStack {
                             Image(systemName: "clock")
                                 .foregroundColor(.secondary)
@@ -65,16 +66,29 @@ struct HomeView: View {
                                 .foregroundColor(.secondary)
                         }
                     }
+
+                    if let lastError = contributionManager.lastError {
+                        Text(lastError)
+                            .font(.caption)
+                            .foregroundColor(.red)
+                            .multilineTextAlignment(.center)
+                    }
                 }
 
                 HStack(spacing: 12) {
                     Button(action: {
                         Task {
-                            await ContributionManager.shared.fetchContributions()
+                            await contributionManager.fetchContributions()
                         }
                     }) {
                         HStack {
-                            Image(systemName: "arrow.clockwise")
+                            if contributionManager.isFetching {
+                                ProgressView()
+                                    .controlSize(.small)
+                                    .tint(.white)
+                            } else {
+                                Image(systemName: "arrow.clockwise")
+                            }
                             Text("Refresh")
                         }
                         .font(.headline)
@@ -85,6 +99,7 @@ struct HomeView: View {
                         .cornerRadius(8)
                     }
                     .buttonStyle(PlainButtonStyle())
+                    .disabled(contributionManager.isFetching)
 
                     Button(action: {
                         authService.logout()
