@@ -87,9 +87,11 @@ struct PulseWidget: Widget {
         .configurationDisplayName("GitHub Pulse")
         .description("View your GitHub contribution heatmap")
         .supportedFamilies([.systemMedium])
+        .contentMarginsDisabled()
     }
 }
 
+#if DEBUG
 #Preview(as: .systemMedium) {
     PulseWidget()
 } timeline: {
@@ -97,3 +99,4 @@ struct PulseWidget: Widget {
     SimpleEntry(date: .now, state: .loading)
     SimpleEntry(date: .now, state: .notAuthenticated)
 }
+#endif

@@ -13,7 +13,7 @@ import WidgetKit
 struct ContributionHeatmapView: View {
     let contributions: ContributionResponse
     let isStale: Bool
-    private let weekCount = 18
+    private let spacing: CGFloat = 3
 
     @Environment(\.colorScheme) private var scheme
 
@@ -23,12 +23,36 @@ struct ContributionHeatmapView: View {
     }
 
     var body: some View {
-        heatmap
-            .padding()
-            .overlay(
-                isStale ? staleOverlay : nil,
-                alignment: .bottomTrailing
-            )
+        GeometryReader { geo in
+            // Cell size fills the height (7 rows); week count fills the width
+            let cell = (geo.size.height - 6 * spacing) / 7
+            let weekCount = max(1, Int((geo.size.width + spacing) / (cell + spacing)))
+            let weeks = contributions.last(weeks: weekCount)
+
+            LazyHGrid(
+                rows: Array(repeating: GridItem(.fixed(cell), spacing: spacing), count: 7),
+                spacing: spacing
+            ) {
+                ForEach(weeks.indices, id: \.self) { weekIndex in
+                    let week = weeks[weekIndex]
+
+                    ForEach(0..<7, id: \.self) { dayIndex in
+                        if let day = week.days[safe: dayIndex] {
+                            GitHubContributionCell(level: day.level, count: day.count, size: cell)
+                        } else {
+                            // Future days in the current week stay blank, like GitHub
+                            Color.clear.frame(width: cell, height: cell)
+                        }
+                    }
+                }
+            }
+            .frame(maxWidth: .infinity, maxHeight: .infinity)
+        }
+        .padding(10)  // content margins are disabled; just enough inset to clear the container's rounded corners
+        .overlay(
+            isStale ? staleOverlay : nil,
+            alignment: .bottomTrailing
+        )
     }
 
     // MARK: Components
@@ -41,26 +65,5 @@ struct ContributionHeatmapView: View {
             .background(Color.black.opacity(0.6))
             .cornerRadius(4)
             .padding(4)
-    }
-
-    private var heatmap: some View {
-        let weeks = contributions.last(weeks: weekCount)
-
-        return LazyHGrid(
-            rows: Array(repeating: GridItem(.fixed(15), spacing: 3), count: 7),
-            spacing: 3
-        ) {
-            ForEach(weeks.indices, id: \.self) { weekIndex in
-                let week = weeks[weekIndex]
-
-                ForEach(0..<7, id: \.self) { dayIndex in
-                    if let day = week.days[safe: dayIndex] {
-                        GitHubContributionCell(level: day.level, count: day.count)
-                    } else {
-                        GitHubContributionCell(level: 0)
-                    }
-                }
-            }
-        }
     }
 }
