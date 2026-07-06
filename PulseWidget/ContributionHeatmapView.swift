@@ -15,8 +15,6 @@ struct ContributionHeatmapView: View {
     let isStale: Bool
     private let spacing: CGFloat = 3
 
-    @Environment(\.colorScheme) private var scheme
-
     init(contributions: ContributionResponse, isStale: Bool = false) {
         self.contributions = contributions
         self.isStale = isStale

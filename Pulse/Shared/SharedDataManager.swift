@@ -36,7 +36,6 @@ class SharedDataManager {
             userDefaults.set(data, forKey: Keys.contributions)
             userDefaults.set(Date(), forKey: Keys.lastUpdated)
             userDefaults.set(true, forKey: Keys.isAuthenticated)
-            userDefaults.synchronize()
             print("Saved \(contributions.weeks.count) weeks of contributions to UserDefaults")
         } catch {
             print("Failed to save contributions: \(error)")
@@ -73,7 +72,6 @@ class SharedDataManager {
 
     func setAuthenticated(_ authenticated: Bool) {
         userDefaults.set(authenticated, forKey: Keys.isAuthenticated)
-        userDefaults.synchronize()
     }
 
     func getIsAuthenticated() -> Bool {
@@ -86,6 +84,5 @@ class SharedDataManager {
         userDefaults.removeObject(forKey: Keys.contributions)
         userDefaults.removeObject(forKey: Keys.lastUpdated)
         userDefaults.removeObject(forKey: Keys.isAuthenticated)
-        userDefaults.synchronize()
     }
 }

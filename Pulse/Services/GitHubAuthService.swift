@@ -33,7 +33,6 @@ class GitHubAuthService: ObservableObject {
     private var deviceCode: String = ""
     private var pollingInterval: Int = 5
     private var deviceCodeExpiresAt: Date?
-    private var cancellables = Set<AnyCancellable>()
 
     enum AuthState {
         case notAuthenticated
