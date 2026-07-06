@@ -5,18 +5,10 @@
 //  Created by Karan Haresh Lokchandani on 12/11/25.
 //
 
-import Combine
 import SwiftUI
-
-#if os(macOS)
-import AppKit
-#elseif os(iOS)
-import UIKit
-#endif
 
 struct ContentView: View {
     @ObservedObject private var authService = GitHubAuthService.shared
-    @StateObject private var contributionManager = ContributionManager.shared
 
     var body: some View {
         VStack(spacing: 20) {
