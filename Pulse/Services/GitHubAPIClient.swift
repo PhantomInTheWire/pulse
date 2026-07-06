@@ -20,7 +20,7 @@ class GitHubAPIClient {
         request.httpMethod = "POST"
         request.setValue("application/x-www-form-urlencoded", forHTTPHeaderField: "Content-Type")
         request.setValue("application/json", forHTTPHeaderField: "Accept")
-        request.httpBody = "client_id=\(clientID)&scope=repo,workflow".data(using: .utf8)
+        request.httpBody = "client_id=\(clientID)&scope=read:user".data(using: .utf8)
 
         let (data, response) = try await URLSession.shared.data(for: request)
 
