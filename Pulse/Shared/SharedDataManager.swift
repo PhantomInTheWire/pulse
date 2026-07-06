@@ -20,34 +20,11 @@ class SharedDataManager {
     }
 
     private init() {
-
-        NSLog("SharedDataManager: Attempting to create shared UserDefaults with suite: \(appGroupID)")
-
         if let sharedDefaults = UserDefaults(suiteName: appGroupID) {
-            NSLog("SharedDataManager: Successfully created shared UserDefaults for app group: \(appGroupID)")
-
-            sharedDefaults.set("test_value", forKey: "shared_test")
-            sharedDefaults.synchronize()
-
-            if sharedDefaults.string(forKey: "shared_test") == "test_value" {
-                NSLog("SharedDataManager: Shared UserDefaults read/write test passed")
-                sharedDefaults.removeObject(forKey: "shared_test")
-                sharedDefaults.synchronize()
-                self.userDefaults = sharedDefaults
-            } else {
-                NSLog("SharedDataManager: Shared UserDefaults read/write test failed - falling back to UserDefaults.standard")
-                self.userDefaults = UserDefaults.standard
-            }
+            self.userDefaults = sharedDefaults
         } else {
-            NSLog("SharedDataManager: Failed to create shared UserDefaults for app group: \(appGroupID)")
-            NSLog("SharedDataManager: Falling back to UserDefaults.standard - data sharing will not work!")
+            NSLog("SharedDataManager: Failed to create UserDefaults for app group \(appGroupID) - falling back to UserDefaults.standard, the widget will not receive data")
             self.userDefaults = UserDefaults.standard
-        }
-
-        if self.userDefaults == UserDefaults.standard {
-            NSLog("SharedDataManager: Using UserDefaults.standard - SHARED DATA WILL NOT WORK!")
-        } else {
-            NSLog("SharedDataManager: Using shared UserDefaults for data access")
         }
     }
 
@@ -100,21 +77,7 @@ class SharedDataManager {
     }
 
     func getIsAuthenticated() -> Bool {
-        NSLog("SharedDataManager: Checking authentication state...")
-        NSLog("SharedDataManager: UserDefaults instance type: \(type(of: userDefaults))")
-        NSLog("SharedDataManager: Is UserDefaults.standard? \(userDefaults == UserDefaults.standard)")
-
-        let hasKey = userDefaults.object(forKey: Keys.isAuthenticated) != nil
-        NSLog("SharedDataManager: Has '\(Keys.isAuthenticated)' key? \(hasKey)")
-
-        let isAuthenticated = userDefaults.bool(forKey: Keys.isAuthenticated)
-        NSLog("SharedDataManager: getIsAuthenticated() = \(isAuthenticated)")
-
-        if userDefaults == UserDefaults.standard {
-            NSLog("SharedDataManager: UserDefaults keys (first 10): \(Array(userDefaults.dictionaryRepresentation().keys.prefix(10)))")
-        }
-
-        return isAuthenticated
+        userDefaults.bool(forKey: Keys.isAuthenticated)
     }
 
     // MARK: - Data Management
