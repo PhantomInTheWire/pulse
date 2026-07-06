@@ -18,10 +18,14 @@ enum WidgetState {
 
 struct Provider: TimelineProvider {
     func placeholder(in context: Context) -> SimpleEntry {
-        SimpleEntry(date: Date(), state: .loading)
+        SimpleEntry(date: Date(), state: .authenticated(.sample))
     }
 
     func getSnapshot(in context: Context, completion: @escaping (SimpleEntry) -> Void) {
+        if context.isPreview {
+            completion(SimpleEntry(date: Date(), state: .authenticated(.sample)))
+            return
+        }
         let entry = fetchEntry(date: Date())
         completion(entry)
     }
@@ -35,7 +39,7 @@ struct Provider: TimelineProvider {
         case .authenticated, .staleData:
             nextUpdate = Calendar.current.date(byAdding: .hour, value: 2, to: currentDate)!
         case .notAuthenticated, .error, .loading:
-            nextUpdate = Calendar.current.date(byAdding: .minute, value: 30, to: currentDate)!
+            nextUpdate = Calendar.current.date(byAdding: .minute, value: 60, to: currentDate)!
         }
 
         let timeline = Timeline(entries: [entry], policy: .after(nextUpdate))
@@ -91,7 +95,6 @@ struct PulseWidget: Widget {
     }
 }
 
-#if DEBUG
 #Preview(as: .systemMedium) {
     PulseWidget()
 } timeline: {
@@ -99,4 +102,3 @@ struct PulseWidget: Widget {
     SimpleEntry(date: .now, state: .loading)
     SimpleEntry(date: .now, state: .notAuthenticated)
 }
-#endif
