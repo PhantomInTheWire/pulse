@@ -9,6 +9,10 @@ import Combine
 import Foundation
 import WidgetKit
 
+#if os(iOS)
+import BackgroundTasks
+#endif
+
 class ContributionManager: ObservableObject {
     static let shared = ContributionManager()
 
@@ -22,6 +26,9 @@ class ContributionManager: ObservableObject {
 
     private init() {
         lastUpdated = sharedData.getLastUpdatedDate()
+        #if os(iOS)
+        registerBackgroundRefresh()
+        #endif
         setupPeriodicFetching()
     }
 
@@ -75,6 +82,35 @@ class ContributionManager: ObservableObject {
             Task { await self.fetchContributionsIfNeeded() }
         }
     }
+
+    // MARK: - Background Refresh (iOS)
+
+    #if os(iOS)
+    private static let backgroundRefreshIdentifier = "com.karan.Pulse.refresh"
+
+    /// Must be called before the app finishes launching (PulseApp.init triggers this).
+    private func registerBackgroundRefresh() {
+        BGTaskScheduler.shared.register(forTaskWithIdentifier: Self.backgroundRefreshIdentifier, using: nil) { task in
+            // The launch handler runs off the main actor; hop back before touching state
+            Task { @MainActor in
+                self.scheduleBackgroundRefresh()
+                await self.fetchContributions()
+                task.setTaskCompleted(success: true)
+            }
+        }
+    }
+
+    /// Best-effort: the system decides when (or whether) the task actually runs.
+    func scheduleBackgroundRefresh() {
+        let request = BGAppRefreshTaskRequest(identifier: Self.backgroundRefreshIdentifier)
+        request.earliestBeginDate = Date(timeIntervalSinceNow: 2 * 60 * 60)
+        do {
+            try BGTaskScheduler.shared.submit(request)
+        } catch {
+            print("Failed to schedule background refresh: \(error.localizedDescription)")
+        }
+    }
+    #endif
 
     // MARK: - Widget Updates
 
