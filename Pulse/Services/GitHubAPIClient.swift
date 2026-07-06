@@ -20,7 +20,7 @@ class GitHubAPIClient {
         request.httpMethod = "POST"
         request.setValue("application/x-www-form-urlencoded", forHTTPHeaderField: "Content-Type")
         request.setValue("application/json", forHTTPHeaderField: "Accept")
-        request.httpBody = "client_id=\(clientID)&scope=read:user".data(using: .utf8)
+        request.httpBody = "client_id=\(formEncode(clientID))&scope=\(formEncode("read:user"))".data(using: .utf8)
 
         let (data, response) = try await URLSession.shared.data(for: request)
 
@@ -32,36 +32,23 @@ class GitHubAPIClient {
             return try JSONDecoder().decode(DeviceAuthResponse.self, from: data)
         } catch {
 
-            if let responseString = String(data: data, encoding: .utf8) {
-                let components = responseString.components(separatedBy: "&")
-                var authData: [String: String] = [:]
+            if let authData = parseFormEncoded(data),
+                let deviceCode = authData["device_code"],
+                let userCode = authData["user_code"],
+                let verificationURI = authData["verification_uri"],
+                let intervalString = authData["interval"],
+                let interval = Int(intervalString),
+                let expiresInString = authData["expires_in"],
+                let expiresIn = Int(expiresInString)
+            {
 
-                for component in components {
-                    let keyValue = component.components(separatedBy: "=")
-                    if keyValue.count == 2 {
-                        let key = keyValue[0]
-                        let value = keyValue[1].removingPercentEncoding ?? keyValue[1]
-                        authData[key] = value
-                    }
-                }
-
-                if let deviceCode = authData["device_code"],
-                    let userCode = authData["user_code"],
-                    let verificationURI = authData["verification_uri"],
-                    let intervalString = authData["interval"],
-                    let interval = Int(intervalString),
-                    let expiresInString = authData["expires_in"],
-                    let expiresIn = Int(expiresInString)
-                {
-
-                    return DeviceAuthResponse(
-                        device_code: deviceCode,
-                        user_code: userCode,
-                        verification_uri: verificationURI,
-                        interval: interval,
-                        expires_in: expiresIn
-                    )
-                }
+                return DeviceAuthResponse(
+                    device_code: deviceCode,
+                    user_code: userCode,
+                    verification_uri: verificationURI,
+                    interval: interval,
+                    expires_in: expiresIn
+                )
             }
             throw AuthError.invalidResponse
         }
@@ -73,7 +60,7 @@ class GitHubAPIClient {
         request.httpMethod = "POST"
         request.setValue("application/x-www-form-urlencoded", forHTTPHeaderField: "Content-Type")
         request.setValue("application/json", forHTTPHeaderField: "Accept")
-        request.httpBody = "client_id=\(clientID)&device_code=\(deviceCode)&grant_type=urn:ietf:params:oauth:grant-type:device_code".data(using: .utf8)
+        request.httpBody = "client_id=\(formEncode(clientID))&device_code=\(formEncode(deviceCode))&grant_type=urn:ietf:params:oauth:grant-type:device_code".data(using: .utf8)
 
         let (data, _) = try await URLSession.shared.data(for: request)
 
@@ -94,28 +81,40 @@ class GitHubAPIClient {
             return try JSONDecoder().decode(TokenResponse.self, from: data)
         } catch {
 
-            if let responseString = String(data: data, encoding: .utf8) {
-                let components = responseString.components(separatedBy: "&")
-                var tokenData: [String: String] = [:]
-
-                for component in components {
-                    let keyValue = component.components(separatedBy: "=")
-                    if keyValue.count == 2 {
-                        let key = keyValue[0]
-                        let value = keyValue[1].removingPercentEncoding ?? keyValue[1]
-                        tokenData[key] = value
-                    }
-                }
-
-                if let accessToken = tokenData["access_token"],
-                    let tokenType = tokenData["token_type"],
-                    let scope = tokenData["scope"]
-                {
-                    return TokenResponse(access_token: accessToken, token_type: tokenType, scope: scope)
-                }
+            if let tokenData = parseFormEncoded(data),
+                let accessToken = tokenData["access_token"],
+                let tokenType = tokenData["token_type"],
+                let scope = tokenData["scope"]
+            {
+                return TokenResponse(access_token: accessToken, token_type: tokenType, scope: scope)
             }
             throw AuthError.invalidResponse
         }
+    }
+
+    private func parseFormEncoded(_ data: Data) -> [String: String]? {
+        guard let responseString = String(data: data, encoding: .utf8) else {
+            return nil
+        }
+
+        var values: [String: String] = [:]
+
+        for component in responseString.components(separatedBy: "&") {
+            let keyValue = component.components(separatedBy: "=")
+            if keyValue.count == 2 {
+                let key = keyValue[0]
+                let value = keyValue[1].removingPercentEncoding ?? keyValue[1]
+                values[key] = value
+            }
+        }
+
+        return values
+    }
+
+    private func formEncode(_ value: String) -> String {
+        var allowed = CharacterSet.alphanumerics
+        allowed.insert(charactersIn: "-._~")
+        return value.addingPercentEncoding(withAllowedCharacters: allowed) ?? value
     }
 
     func fetchUserInfo(token: String) async throws -> GitHubUser {

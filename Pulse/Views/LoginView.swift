@@ -82,22 +82,7 @@ struct LoginView: View {
                     .background(Color.gray.opacity(0.1))
                     .cornerRadius(8)
 
-                Button(action: {
-                    #if os(macOS)
-                    NSPasteboard.general.clearContents()
-                    NSPasteboard.general.setString(authService.userCode, forType: .string)
-                    #elseif os(iOS)
-                    UIPasteboard.general.string = authService.userCode
-                    #endif
-                }) {
-                    HStack {
-                        Image(systemName: "doc.on.doc")
-                        Text("Copy Code")
-                    }
-                    .font(.caption)
-                    .foregroundColor(.accentColor)
-                }
-                .buttonStyle(PlainButtonStyle())
+                copyCodeButton
             }
 
             Text("After authorizing on GitHub, click Continue below:")
@@ -143,22 +128,7 @@ struct LoginView: View {
                     .background(Color.gray.opacity(0.1))
                     .cornerRadius(8)
 
-                Button(action: {
-                    #if os(macOS)
-                    NSPasteboard.general.clearContents()
-                    NSPasteboard.general.setString(authService.userCode, forType: .string)
-                    #elseif os(iOS)
-                    UIPasteboard.general.string = authService.userCode
-                    #endif
-                }) {
-                    HStack {
-                        Image(systemName: "doc.on.doc")
-                        Text("Copy Code")
-                    }
-                    .font(.caption)
-                    .foregroundColor(.accentColor)
-                }
-                .buttonStyle(PlainButtonStyle())
+                copyCodeButton
             }
 
             Text("Waiting for you to complete authorization in GitHub...")
@@ -166,5 +136,24 @@ struct LoginView: View {
                 .foregroundColor(.secondary)
                 .multilineTextAlignment(.center)
         }
+    }
+
+    private var copyCodeButton: some View {
+        Button(action: {
+            #if os(macOS)
+            NSPasteboard.general.clearContents()
+            NSPasteboard.general.setString(authService.userCode, forType: .string)
+            #elseif os(iOS)
+            UIPasteboard.general.string = authService.userCode
+            #endif
+        }) {
+            HStack {
+                Image(systemName: "doc.on.doc")
+                Text("Copy Code")
+            }
+            .font(.caption)
+            .foregroundColor(.accentColor)
+        }
+        .buttonStyle(PlainButtonStyle())
     }
 }
