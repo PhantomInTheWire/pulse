@@ -31,6 +31,7 @@ class GitHubAuthService: ObservableObject {
     private var pollingTimer: Timer?
     private var deviceCode: String = ""
     private var pollingInterval: Int = 5
+    private var deviceCodeExpiresAt: Date?
     private var cancellables = Set<AnyCancellable>()
 
     enum AuthState {
@@ -75,6 +76,7 @@ class GitHubAuthService: ObservableObject {
                     self.userCode = response.user_code
                     self.verificationURI = response.verification_uri
                     self.pollingInterval = response.interval
+                    self.deviceCodeExpiresAt = Date().addingTimeInterval(TimeInterval(response.expires_in))
                     self.authState = .awaitingUser
 
                     DispatchQueue.main.asyncAfter(deadline: .now() + 1.0) {
@@ -116,11 +118,14 @@ class GitHubAuthService: ObservableObject {
             } catch let error as AuthError {
                 await MainActor.run {
                     switch error {
-                    case .unknownError(let msg) where msg == "authorization_pending":
+                    case .authorizationPending:
                         self.scheduleNextPoll()
                     case .slowDown:
                         // RFC 8628: on slow_down, increase the polling interval by 5 seconds
                         self.pollingInterval += 5
+                        self.scheduleNextPoll()
+                    case .networkError, .invalidResponse:
+                        // transient server/transport trouble — keep polling until the code expires
                         self.scheduleNextPoll()
                     default:
                         self.handleError(error)
@@ -128,13 +133,19 @@ class GitHubAuthService: ObservableObject {
                 }
             } catch {
                 await MainActor.run {
-                    self.handleError(.unknownError(error.localizedDescription))
+                    // transient transport error (e.g. connection dropped while the app
+                    // was backgrounded for Safari) — keep polling, don't abort the flow
+                    self.scheduleNextPoll()
                 }
             }
         }
     }
 
     private func scheduleNextPoll() {
+        if let expiry = deviceCodeExpiresAt, Date() >= expiry {
+            handleError(.authorizationExpired)
+            return
+        }
         pollingTimer?.invalidate()
         pollingTimer = Timer.scheduledTimer(withTimeInterval: TimeInterval(pollingInterval), repeats: false) { [weak self] _ in
             self?.pollForToken()

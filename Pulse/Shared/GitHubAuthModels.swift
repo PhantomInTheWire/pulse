@@ -64,9 +64,11 @@ enum ContributionLevel: Int, CaseIterable, Codable {
 enum AuthError: Error, LocalizedError {
     case networkError(String)
     case invalidResponse
+    case authorizationPending
     case authorizationExpired
     case accessDenied
     case slowDown
+    case tokenRevoked
     case unknownError(String)
 
     var errorDescription: String? {
@@ -75,21 +77,24 @@ enum AuthError: Error, LocalizedError {
             return "Network error: \(message)"
         case .invalidResponse:
             return "Invalid response from GitHub"
+        case .authorizationPending:
+            return "Waiting for authorization on GitHub"
         case .authorizationExpired:
             return "Authorization code expired"
         case .accessDenied:
             return "Access denied by user"
         case .slowDown:
             return "Please wait before trying again"
+        case .tokenRevoked:
+            return "GitHub token is no longer valid"
         case .unknownError(let message):
             return "Unknown error: \(message)"
         }
     }
 }
 
-// MARK: - Sample Data for Previews
+// MARK: - Sample Data for Previews and the widget-gallery snapshot
 
-#if DEBUG
 extension ContributionResponse {
     static let sample: ContributionResponse = {
         var weeks: [ContributionWeek] = []
@@ -142,4 +147,3 @@ extension ContributionResponse {
         return ContributionResponse(weeks: weeks)
     }()
 }
-#endif

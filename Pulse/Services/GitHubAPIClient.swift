@@ -82,7 +82,7 @@ class GitHubAPIClient {
         {
 
             switch error {
-            case "authorization_pending": throw AuthError.unknownError("authorization_pending")
+            case "authorization_pending": throw AuthError.authorizationPending
             case "slow_down": throw AuthError.slowDown
             case "expired_token": throw AuthError.authorizationExpired
             case "access_denied": throw AuthError.accessDenied
@@ -127,6 +127,9 @@ class GitHubAPIClient {
         let (data, response) = try await URLSession.shared.data(for: request)
 
         guard let httpResponse = response as? HTTPURLResponse, httpResponse.statusCode == 200 else {
+            if let httpResponse = response as? HTTPURLResponse, httpResponse.statusCode == 401 {
+                throw AuthError.tokenRevoked
+            }
             throw AuthError.invalidResponse
         }
 
@@ -168,6 +171,9 @@ class GitHubAPIClient {
         }
 
         guard httpResponse.statusCode == 200 else {
+            if httpResponse.statusCode == 401 {
+                throw AuthError.tokenRevoked
+            }
             let responseString = String(data: data, encoding: .utf8) ?? "Unknown error"
             throw AuthError.networkError("GitHub API returned status \(httpResponse.statusCode): \(responseString)")
         }
