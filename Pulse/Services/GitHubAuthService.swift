@@ -7,6 +7,7 @@
 
 import Combine
 import Foundation
+import WidgetKit
 
 #if canImport(AppKit)
 import AppKit
@@ -60,6 +61,14 @@ class GitHubAuthService: ObservableObject {
         } else {
             isAuthenticated = false
             authState = .notAuthenticated
+
+            // token gone (revoked externally / keychain reset) — clear the shared
+            // auth flag so the widget stops rendering stale data. Use
+            // SharedDataManager/WidgetCenter directly: this runs during init,
+            // and touching ContributionManager.shared here would deadlock the
+            // singleton initializers.
+            SharedDataManager.shared.setAuthenticated(false)
+            WidgetCenter.shared.reloadAllTimelines()
         }
     }
 
@@ -166,7 +175,7 @@ class GitHubAuthService: ObservableObject {
         }
     }
 
-    private func fetchUserInfo(with token: String) async {
+    private func fetchUserInfo(with token: String, isRetry: Bool = false) async {
         do {
             let user = try await GitHubAPIClient.shared.fetchUserInfo(token: token)
 
@@ -185,8 +194,26 @@ class GitHubAuthService: ObservableObject {
                 }
             }
         } catch {
+            let authError = error as? AuthError ?? .unknownError(error.localizedDescription)
+
+            if case .tokenRevoked = authError {
+                // token is genuinely dead — clean up the session
+                await MainActor.run {
+                    self.logout()
+                }
+                return
+            }
+
+            if !isRetry {
+                // likely a transient network failure (e.g. right after the token
+                // grant) — retry once before discarding a perfectly good session
+                try? await Task.sleep(nanoseconds: 3_000_000_000)
+                await fetchUserInfo(with: token, isRetry: true)
+                return
+            }
+
             await MainActor.run {
-                self.handleError(error as? AuthError ?? .unknownError(error.localizedDescription))
+                self.handleError(authError)
             }
         }
     }
