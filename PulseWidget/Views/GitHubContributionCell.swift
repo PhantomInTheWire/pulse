@@ -24,7 +24,9 @@ struct GitHubContributionCell: View {
                 .minimumScaleFactor(0.5)
                 .frame(width: size, height: size)
         } else {
-            let palette = DynamicGitHubPalette.palette(accent: .accentColor, scheme: scheme)
+            // Color.accentColor doesn't resolve to the asset catalog inside a
+            // widget extension (SpringBoard hosts it) — look the color up by name
+            let palette = DynamicGitHubPalette.palette(accent: Color("AccentColor"), scheme: scheme)
             RoundedRectangle(cornerRadius: size * 0.25)
                 .fill(palette[min(max(level, 0), palette.count - 1)])
                 .frame(width: size, height: size)
