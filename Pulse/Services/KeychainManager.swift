@@ -21,6 +21,7 @@ class KeychainManager {
             kSecAttrService as String: service,
             kSecAttrAccount as String: "github_token",
             kSecValueData as String: data,
+            kSecAttrAccessible as String: kSecAttrAccessibleAfterFirstUnlock,
         ]
 
         SecItemDelete(query as CFDictionary)
@@ -72,6 +73,7 @@ class KeychainManager {
             kSecAttrService as String: service,
             kSecAttrAccount as String: "github_user",
             kSecValueData as String: data,
+            kSecAttrAccessible as String: kSecAttrAccessibleAfterFirstUnlock,
         ]
 
         SecItemDelete(query as CFDictionary)
