@@ -10,6 +10,8 @@ import Foundation
 
 #if canImport(AppKit)
 import AppKit
+#elseif canImport(UIKit)
+import UIKit
 #endif
 
 class GitHubAuthService: ObservableObject {
@@ -88,10 +90,11 @@ class GitHubAuthService: ObservableObject {
     }
 
     func openVerificationPage() {
+        guard let url = URL(string: verificationURI) else { return }
         #if os(macOS)
-        if let url = URL(string: verificationURI) {
-            NSWorkspace.shared.open(url)
-        }
+        NSWorkspace.shared.open(url)
+        #elseif canImport(UIKit)
+        UIApplication.shared.open(url)
         #endif
     }
 
@@ -116,7 +119,8 @@ class GitHubAuthService: ObservableObject {
                     case .unknownError(let msg) where msg == "authorization_pending":
                         self.scheduleNextPoll()
                     case .slowDown:
-                        self.pollingInterval += 1
+                        // RFC 8628: on slow_down, increase the polling interval by 5 seconds
+                        self.pollingInterval += 5
                         self.scheduleNextPoll()
                     default:
                         self.handleError(error)
