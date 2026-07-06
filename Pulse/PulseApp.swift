@@ -26,6 +26,11 @@ struct PulseApp: App {
             if newPhase == .active {
                 Task { await ContributionManager.shared.fetchContributionsIfNeeded() }
             }
+            #if os(iOS)
+            if newPhase == .background {
+                ContributionManager.shared.scheduleBackgroundRefresh()
+            }
+            #endif
         }
     }
 }

@@ -59,6 +59,13 @@
 			);
 			target = E66891E72EC3C21800105332 /* PulseWidgetExtension */;
 		};
+		E69FE8872EDCD0A400E85AC6 /* Exceptions for "Pulse" folder in "Pulse" target */ = {
+			isa = PBXFileSystemSynchronizedBuildFileExceptionSet;
+			membershipExceptions = (
+				Info.plist,
+			);
+			target = E66891792EC3BED800105332 /* Pulse */;
+		};
 /* End PBXFileSystemSynchronizedBuildFileExceptionSet section */
 
 /* Begin PBXFileSystemSynchronizedRootGroup section */
@@ -66,6 +73,7 @@
 			isa = PBXFileSystemSynchronizedRootGroup;
 			exceptions = (
 				E69FE8862EDCD0A400E85AC6 /* Exceptions for "Pulse" folder in "PulseWidgetExtension" target */,
+				E69FE8872EDCD0A400E85AC6 /* Exceptions for "Pulse" folder in "Pulse" target */,
 			);
 			path = Pulse;
 			sourceTree = "<group>";
@@ -399,6 +407,7 @@
 				ENABLE_RESOURCE_ACCESS_USB = NO;
 				ENABLE_USER_SELECTED_FILES = readonly;
 				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_FILE = Pulse/Info.plist;
 				INFOPLIST_KEY_GitHubClientID = Ov23lihSGOuYdGx4X39N;
 				"INFOPLIST_KEY_UIApplicationSceneManifest_Generation[sdk=iphoneos*]" = YES;
 				"INFOPLIST_KEY_UIApplicationSceneManifest_Generation[sdk=iphonesimulator*]" = YES;
@@ -456,6 +465,7 @@
 				ENABLE_RESOURCE_ACCESS_USB = NO;
 				ENABLE_USER_SELECTED_FILES = readonly;
 				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_FILE = Pulse/Info.plist;
 				INFOPLIST_KEY_GitHubClientID = Ov23lihSGOuYdGx4X39N;
 				"INFOPLIST_KEY_UIApplicationSceneManifest_Generation[sdk=iphoneos*]" = YES;
 				"INFOPLIST_KEY_UIApplicationSceneManifest_Generation[sdk=iphonesimulator*]" = YES;
