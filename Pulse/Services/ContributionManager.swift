@@ -12,11 +12,16 @@ import WidgetKit
 class ContributionManager: ObservableObject {
     static let shared = ContributionManager()
 
+    @Published var isFetching = false
+    @Published var lastUpdated: Date?
+    @Published var lastError: String?
+
     private let sharedData = SharedDataManager.shared
     private let authService = GitHubAuthService.shared
     private var fetchTimer: Timer?
 
     private init() {
+        lastUpdated = sharedData.getLastUpdatedDate()
         setupPeriodicFetching()
     }
 
@@ -33,18 +38,28 @@ class ContributionManager: ObservableObject {
             return
         }
 
-        print("Starting contribution fetch...")
+        guard !isFetching else { return }
+        isFetching = true
+        defer { isFetching = false }
 
         do {
             let contributions = try await authService.fetchContributions()
 
-            await MainActor.run {
-                sharedData.saveContributions(contributions)
-                sharedData.setAuthenticated(true)
-                updateWidgetTimeline()
-                print("Contributions saved and widget updated successfully")
-            }
+            // user may have disconnected while the request was in flight;
+            // don't resurrect shared auth state after logout
+            guard authService.isAuthenticated else { return }
+
+            sharedData.saveContributions(contributions)
+            sharedData.setAuthenticated(true)
+            lastUpdated = Date()
+            lastError = nil
+            updateWidgetTimeline()
         } catch {
+            if case AuthError.tokenRevoked = error {
+                authService.logout()
+                return
+            }
+            lastError = error.localizedDescription
             print("Failed to fetch contributions: \(error.localizedDescription)")
         }
     }
